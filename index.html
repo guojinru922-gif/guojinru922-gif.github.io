@@ -1116,6 +1116,9 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 }
 /* ===== Recurring Events (v2) ===== */
 .rec-badge{font-size:10px;line-height:1;opacity:.65;margin-right:4px;flex:none}
+.rec-badge.adj{margin-left:2px;margin-right:0;opacity:.85}
+.rec-occ-date{text-align:center;color:var(--text-3);font-size:13px;margin:6px 0 12px;font-weight:500}
+.rec-occ-actions{display:flex;flex-direction:column;gap:8px}
 .pill-row.recurring{background:#FFFDF3}
 .week-entry.recurring{background:#FFFDF3}
 .month-day-pill.recurring{background:#FFFDF3}
@@ -1428,6 +1431,28 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
         <button class="setting-btn danger" id="recDeleteBtn" style="flex:1;display:none" onclick="UI.deleteRecurringConfirm()">删除</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Recurring Occurrence Action Sheet -->
+<div class="modal-overlay" id="recOccurrenceModal" onclick="UI.closeModal(event,'recOccurrenceModal')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:460px">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="recOccTitle">重复事件</div>
+    <div class="rec-occ-date" id="recOccDate"></div>
+    <div class="rec-occ-actions">
+      <button class="setting-btn outline" onclick="UI.recOccSkip()">⏭ 跳过这次（没发生）</button>
+      <button class="setting-btn outline" onclick="UI.recOccReschedule()">📅 改到这天…</button>
+      <button class="setting-btn outline" id="recOccRestoreBtn" style="display:none" onclick="UI.recOccRestore()">↩ 还原这次调整</button>
+      <button class="setting-btn primary" onclick="UI.recOccEdit()">✏️ 编辑规则</button>
+      <button class="setting-btn danger" onclick="UI.recOccDelete()">🗑 删除整个重复事件</button>
+    </div>
+    <div class="setting-group" id="recOccDateWrap" style="display:none;margin-top:10px">
+      <label class="setting-label">改到哪一天</label>
+      <input type="date" class="setting-input" id="recOccNewDate">
+      <button class="setting-btn primary" style="margin-top:8px" onclick="UI.recOccApplyNewDate()">确定</button>
+    </div>
+    <button class="setting-btn outline" style="margin-top:10px" onclick="UI.closeModal(event,'recOccurrenceModal')">取消</button>
   </div>
 </div>
 
@@ -2487,8 +2512,8 @@ const UI = {
     const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
     if (entry.recurring) {
       return `
-      <div class="pill-row recurring" data-id="${entry.id}" data-date="${date}" style="--cat-color:${cat.color}" onclick="UI.openRecurringManager('${entry.defId}')">
-        <span class="rec-badge">🔁</span>
+      <div class="pill-row recurring" data-id="${entry.id}" data-date="${date}" style="--cat-color:${cat.color}" onclick="UI.openRecurringOccurrence('${entry.defId}','${date}')">
+        <span class="rec-badge">🔁</span>${entry.adjusted ? '<span class="rec-badge adj" title="已调整">✏️</span>' : ''}
         <div class="pill-row-text">${UI.escapeHtml(disp)}</div>
       </div>`;
     }
@@ -2543,7 +2568,7 @@ const UI = {
 
     dates.forEach(d => {
       const dateStr = DateUtil.format(d);
-      const allEntries = Entries.getByDate(dateStr);
+      const allEntries = UI.mergedForDate(dateStr).all;
       const isToday = DateUtil.isToday(dateStr);
       const wd = d.getDay();
       const todayClass = isToday ? ' week-col-today' : '';
@@ -2569,7 +2594,7 @@ const UI = {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
           const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
           if (entry.recurring) {
-            html += `<div class="week-entry recurring" style="--cat-color:${cat.color}" onclick="event.stopPropagation();UI.openRecurringManager('${entry.defId}')"><span class="rec-badge">🔁</span>${UI.escapeHtml(wtext)}</div>`;
+            html += `<div class="week-entry recurring" style="--cat-color:${cat.color}" onclick="event.stopPropagation();UI.openRecurringOccurrence('${entry.defId}','${dateStr}')"><span class="rec-badge">🔁</span>${entry.adjusted ? '<span class="rec-badge adj" title="已调整">✏️</span>' : ''}${UI.escapeHtml(wtext)}</div>`;
           } else {
             html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
           }
@@ -2684,7 +2709,7 @@ const UI = {
             displayEntries.slice(0, 3).forEach(entry => {
               const ec = CAT_MAP[entry.category] || CAT_MAP.work;
               if (entry.recurring) {
-                html += `<div class="month-day-pill recurring" style="--cat-color:${ec.color}"><span class="rec-badge">🔁</span>${UI.escapeHtml(entry.content)}</div>`;
+                html += `<div class="month-day-pill recurring" style="--cat-color:${ec.color}" onclick="UI.openRecurringOccurrence('${entry.defId}','${dateStr}')"><span class="rec-badge">🔁</span>${entry.adjusted ? '<span class="rec-badge adj" title="已调整">✏️</span>' : ''}${UI.escapeHtml(entry.content)}</div>`;
               } else {
                 html += `<div class="month-day-pill" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
               }
@@ -3258,9 +3283,9 @@ const UI = {
   },
 
   closeModal(e, id) {
-    if (e.target === e.currentTarget) {
-      document.getElementById(id).classList.remove('show');
-    }
+    if (e && e.target !== e.currentTarget) return;
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
   },
 
   saveSupabaseConfig() {
@@ -4457,26 +4482,79 @@ const GH = {
 /* ===== Recurring Events (v2) ===== */
 const Recurring = {
   WEEKDAYS: ['周一','周二','周三','周四','周五','周六','周日'], // idx -> JS getDay (idx6 => 0)
-  matchesOn(dateStr) {
-    if (!state.recurring || !state.recurring.items || !state.recurring.items.length) return [];
+  _ruleMatch(def, dateStr) {
+    const r = def.rule || {};
     const d = DateUtil.parse(dateStr);
     const gd = d.getDay();
     const dom = d.getDate();
     const mon = d.getMonth() + 1;
-    return state.recurring.items.filter(def => {
-      const r = def.rule || {};
-      if (r.type === 'daily') return true;
-      if (r.type === 'weekly') return Array.isArray(r.days) && r.days.includes(gd);
-      if (r.type === 'monthly') return dom === r.dom;
-      if (r.type === 'yearly') return mon === r.month && dom === r.day;
-      if (r.type === 'interval') {
-        if (!r.anchor || !r.every) return false;
-        const a = DateUtil.parse(r.anchor);
-        const diff = Math.round((d.getTime() - a.getTime()) / 86400000);
-        return diff >= 0 && r.every > 0 && diff % r.every === 0;
+    if (r.type === 'daily') return true;
+    if (r.type === 'weekly') return Array.isArray(r.days) && r.days.includes(gd);
+    if (r.type === 'monthly') return dom === r.dom;
+    if (r.type === 'yearly') return mon === r.month && dom === r.day;
+    if (r.type === 'interval') {
+      if (!r.anchor || !r.every) return false;
+      const a = DateUtil.parse(r.anchor);
+      const diff = Math.round((d.getTime() - a.getTime()) / 86400000);
+      return diff >= 0 && r.every > 0 && diff % r.every === 0;
+    }
+    return false;
+  },
+  matchesOn(dateStr) {
+    if (!state.recurring || !state.recurring.items || !state.recurring.items.length) return [];
+    const out = [];
+    state.recurring.items.forEach(def => {
+      const exc = (def.exceptions && def.exceptions[dateStr]) || null;
+      if (exc && exc.action === 'skip') return;            // this occurrence suppressed
+      if (exc && exc.action === 'move') {
+        if (exc.to === dateStr) out.push(def);             // moved here
+        return;                                            // original rule date moved away
       }
-      return false;
+      if (this._ruleMatch(def, dateStr)) out.push(def);
     });
+    // occurrences moved TO this date from another rule date
+    state.recurring.items.forEach(def => {
+      const ex = def.exceptions || {};
+      for (const k in ex) {
+        if (ex[k].action === 'move' && ex[k].to === dateStr && !out.includes(def)) out.push(def);
+      }
+    });
+    return out;
+  },
+  ruleDateFor(def, dateStr) {
+    if (this._ruleMatch(def, dateStr)) return dateStr;
+    const ex = def.exceptions || {};
+    for (const k in ex) if (ex[k].action === 'move' && ex[k].to === dateStr) return k;
+    return dateStr;
+  },
+  addException(defId, ruleDate, action, to) {
+    const def = (state.recurring.items || []).find(x => x.id === defId);
+    if (!def) return;
+    if (!def.exceptions) def.exceptions = {};
+    def.exceptions[ruleDate] = { action, to: to || null, at: Date.now() };
+    this.upsert(def);
+  },
+  removeException(defId, ruleDate) {
+    const def = (state.recurring.items || []).find(x => x.id === defId);
+    if (!def || !def.exceptions || !def.exceptions[ruleDate]) return;
+    delete def.exceptions[ruleDate];
+    this.upsert(def);
+  },
+  reschedule(defId, ruleDate, toDate) {
+    const def = (state.recurring.items || []).find(x => x.id === defId);
+    if (!def) return;
+    const r = def.rule || {};
+    if (r.type === 'interval') {
+      // re-anchor: future occurrences recomputed from the actual date
+      def.rule = Object.assign({}, r, { anchor: toDate });
+      if (def.exceptions && def.exceptions[ruleDate]) delete def.exceptions[ruleDate];
+    } else {
+      this.addException(defId, ruleDate, 'move', toDate);
+    }
+    this.upsert(def);
+  },
+  exceptionCount(def) {
+    return def.exceptions ? Object.keys(def.exceptions).length : 0;
   },
   ruleText(def) {
     const r = def.rule || {};
@@ -4509,13 +4587,21 @@ const Recurring = {
 
 UI.mergedForDate = function(date) {
   const real = Entries.getByDate(date);
-  const rec = Recurring.matchesOn(date).map(def => ({
-    id: 'rec_' + def.id,
-    category: def.category,
-    content: (def.icon ? def.icon + ' ' : '') + def.title,
-    recurring: true,
-    defId: def.id
-  }));
+  const matches = Recurring.matchesOn(date);
+  const rec = matches.map(def => {
+    const ruleDate = Recurring.ruleDateFor(def, date);
+    const exc = (def.exceptions && def.exceptions[ruleDate]) || null;
+    const moved = exc && exc.action === 'move';
+    return {
+      id: 'rec_' + def.id,
+      category: def.category,
+      content: (def.icon ? def.icon + ' ' : '') + def.title,
+      recurring: true,
+      defId: def.id,
+      adjusted: !!moved,
+      ruleDate: ruleDate
+    };
+  });
   return { real, rec, all: rec.concat(real) };
 };
 
@@ -4523,7 +4609,7 @@ UI.mergedForDate = function(date) {
 UI._recEditingId = null;
 UI._recPresets = {
   birthday: { icon:'🎂', title:'生日', category:'thoughts', rule:{type:'yearly'} },
-  period:   { icon:'🩸', title:'经期', category:'milktea', rule:{type:'interval', every:28, anchor: DateUtil.format(new Date())} },
+  period:   { icon:'🩸', title:'经期', category:'milktea', rule:{type:'interval', every:30, anchor: DateUtil.format(new Date())} },
   anniv:    { icon:'💍', title:'纪念日', category:'thoughts', rule:{type:'yearly'} },
   weekly:   { icon:'', title:'', category:'work', rule:{type:'weekly', days:[]} },
   monthly:  { icon:'', title:'', category:'work', rule:{type:'monthly', dom:1} },
@@ -4556,7 +4642,7 @@ UI.renderRecurringList = function() {
       <div class="rec-item-dot" style="background:${cat.color}"></div>
       <div class="rec-item-main">
         <div class="rec-item-title">${(def.icon ? def.icon + ' ' : '') + UI.escapeHtml(def.title)}</div>
-        <div class="rec-item-rule">${UI.escapeHtml(Recurring.ruleText(def))}</div>
+        <div class="rec-item-rule">${UI.escapeHtml(Recurring.ruleText(def))}${Recurring.exceptionCount(def) ? ' · <span style="color:var(--c-milktea);font-weight:600">'+Recurring.exceptionCount(def)+' 次已调整</span>' : ''}</div>
       </div>
       <div class="rec-item-actions">
         <button class="rec-item-btn" onclick="UI.openRecurringEditor('${def.id}')">编辑</button>
@@ -4659,6 +4745,47 @@ UI.deleteRecurringConfirm = function(defId) {
     UI.recEditorCancel();
     UI.renderRecurringList();
   });
+};
+UI._occ = { defId: null, date: null, ruleDate: null };
+UI.openRecurringOccurrence = function(defId, dateStr) {
+  const def = (state.recurring.items || []).find(x => x.id === defId);
+  if (!def) return;
+  UI._occ = { defId, date: dateStr, ruleDate: Recurring.ruleDateFor(def, dateStr) };
+  document.getElementById('recOccTitle').textContent = (def.icon ? def.icon + ' ' : '') + (def.title || '重复事件');
+  const d = DateUtil.parse(dateStr);
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  document.getElementById('recOccDate').textContent = dateStr + ' 周' + wd;
+  const exc = (def.exceptions && def.exceptions[UI._occ.ruleDate]) || null;
+  document.getElementById('recOccRestoreBtn').style.display = exc ? '' : 'none';
+  document.getElementById('recOccDateWrap').style.display = 'none';
+  document.getElementById('recOccurrenceModal').classList.add('show');
+};
+UI.recOccSkip = function() {
+  Recurring.addException(UI._occ.defId, UI._occ.ruleDate, 'skip');
+  UI.closeModal(null, 'recOccurrenceModal');
+};
+UI.recOccReschedule = function() {
+  document.getElementById('recOccDateWrap').style.display = '';
+  document.getElementById('recOccNewDate').value = UI._occ.date;
+  document.getElementById('recOccNewDate').focus();
+};
+UI.recOccApplyNewDate = function() {
+  const nd = document.getElementById('recOccNewDate').value;
+  if (!nd) return;
+  Recurring.reschedule(UI._occ.defId, UI._occ.ruleDate, nd);
+  UI.closeModal(null, 'recOccurrenceModal');
+};
+UI.recOccRestore = function() {
+  Recurring.removeException(UI._occ.defId, UI._occ.ruleDate);
+  UI.closeModal(null, 'recOccurrenceModal');
+};
+UI.recOccEdit = function() {
+  UI.closeModal(null, 'recOccurrenceModal');
+  UI.openRecurringEditor(UI._occ.defId);
+};
+UI.recOccDelete = function() {
+  UI.closeModal(null, 'recOccurrenceModal');
+  UI.deleteRecurringConfirm(UI._occ.defId);
 };
 UI.recEditorCancel = function() {
   UI._recEditingId = null;
