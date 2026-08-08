@@ -307,6 +307,11 @@ input,textarea{font-family:inherit;font-size:16px}
 }
 .week-entry:active{transform:scale(.97);opacity:.85}
 .week-empty{font-size:11px;color:var(--text-3);text-align:center;padding:24px 2px}
+/* Milktea items: filled peach so they match the category option color */
+.pill-row.cat-milktea{background:#FFCDB2;border-color:#E8A88A;border-left:4px solid #E8A88A}
+.pill-row.cat-milktea .pill-row-text{color:#A04A2F}
+.week-entry.cat-milktea{background:#FFCDB2;border-color:#E8A88A;border-left:3px solid #E8A88A;color:#A04A2F}
+.month-day-pill.cat-milktea{background:#FFCDB2;border:1px solid #E8A88A;color:#A04A2F}
 /* ===== Unified Filter Bar ===== */
 .filter-bar{
   display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding:2px 0 4px;
@@ -2377,8 +2382,8 @@ const UI = {
     const cat = CAT_MAP[entry.category] || CAT_MAP.work;
     const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
     return `
-      <div class="pill-row" data-id="${entry.id}" data-date="${date}"
-        style="--cat-color:${cat.textColor || cat.color}"
+      <div class="pill-row${entry.category === 'milktea' ? ' cat-milktea' : ''}" data-id="${entry.id}" data-date="${date}"
+        style="--cat-color:${cat.color}"
         ontouchstart="UI._lpStart(event,'${date}','${entry.id}')"
         ontouchend="UI._lpCancel()"
         ontouchmove="UI._lpCancel()"
@@ -2440,27 +2445,31 @@ const UI = {
         entries.forEach(entry => {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
           const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
-          html += `<div class="week-entry" style="--cat-color:${cat.textColor || cat.color}">${UI.escapeHtml(wtext)}</div>`;
+          html += `<div class="week-entry${entry.category === 'milktea' ? ' cat-milktea' : ''}" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
         });
       }
       html += `</div></div>`;
     });
 
     html += '</div></div>';
-    // Mobile: horizontally scroll the week so today's column is in view
-    if (UI.isMobile()) requestAnimationFrame(() => UI.scrollWeekViewToToday());
+    // Mobile: if the rendered week contains today, center the today column
+    const hasToday = weekDates.some(d => DateUtil.isToday(DateUtil.format(d)));
+    if (UI.isMobile() && hasToday) setTimeout(() => UI.scrollWeekViewToToday(), 60);
     return html;
   },
 
   scrollWeekViewToToday() {
     const wrap = document.querySelector('.week-view-wrap');
     if (!wrap) return;
-    const todayCol = wrap.querySelector('.week-col-today') || wrap.querySelector('.week-col');
+    const todayCol = wrap.querySelector('.week-col-today');
     if (!todayCol) return;
-    const wrapRect = wrap.getBoundingClientRect();
-    const colRect = todayCol.getBoundingClientRect();
-    const target = wrap.scrollLeft + (colRect.left - wrapRect.left) - (wrapRect.width / 2) + (colRect.width / 2);
-    wrap.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+    // Center the today column horizontally; leave vertical scroll untouched.
+    if (typeof todayCol.scrollIntoView === 'function') {
+      todayCol.scrollIntoView({ inline: 'center', block: 'nearest' });
+    } else {
+      const target = todayCol.offsetLeft - (wrap.clientWidth - todayCol.offsetWidth) / 2;
+      wrap.scrollLeft = Math.max(0, target);
+    }
   },
 
   renderMonthView() {
@@ -2535,7 +2544,7 @@ const UI = {
             html += '<div class="month-day-pills">';
             displayEntries.slice(0, 3).forEach(entry => {
               const ec = CAT_MAP[entry.category] || CAT_MAP.work;
-              html += `<div class="month-day-pill" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
+              html += `<div class="month-day-pill${entry.category === 'milktea' ? ' cat-milktea' : ''}" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
             });
             if (displayEntries.length > 3) {
               html += `<div class="month-day-pill more">+${displayEntries.length - 3}</div>`;
@@ -3208,7 +3217,7 @@ const UI = {
     UI.updateDateStripVisibility();
     UI.updateDateStripMonth();
     if (state.view === 'day') UI.scrollDateStripToSelected();
-    if (state.view === 'week') requestAnimationFrame(() => UI.scrollWeekViewToToday());
+    if (state.view === 'week') setTimeout(() => UI.scrollWeekViewToToday(), 60);
   },
 
   navPrev() {
