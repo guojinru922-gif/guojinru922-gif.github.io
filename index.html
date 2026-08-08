@@ -2377,7 +2377,7 @@ const UI = {
     const cat = CAT_MAP[entry.category] || CAT_MAP.work;
     const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
     return `
-      <div class="pill-row${entry.category === 'milktea' ? ' cat-milktea' : ''}" data-id="${entry.id}" data-date="${date}"
+      <div class="pill-row" data-id="${entry.id}" data-date="${date}"
         style="--cat-color:${cat.color}"
         ontouchstart="UI._lpStart(event,'${date}','${entry.id}')"
         ontouchend="UI._lpCancel()"
@@ -2440,7 +2440,7 @@ const UI = {
         entries.forEach(entry => {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
           const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
-          html += `<div class="week-entry${entry.category === 'milktea' ? ' cat-milktea' : ''}" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
+          html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
         });
       }
       html += `</div></div>`;
@@ -2539,7 +2539,7 @@ const UI = {
             html += '<div class="month-day-pills">';
             displayEntries.slice(0, 3).forEach(entry => {
               const ec = CAT_MAP[entry.category] || CAT_MAP.work;
-              html += `<div class="month-day-pill${entry.category === 'milktea' ? ' cat-milktea' : ''}" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
+              html += `<div class="month-day-pill" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
             });
             if (displayEntries.length > 3) {
               html += `<div class="month-day-pill more">+${displayEntries.length - 3}</div>`;
