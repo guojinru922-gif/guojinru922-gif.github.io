@@ -38,7 +38,7 @@
   --radius:16px; --radius-sm:12px; --radius-lg:22px; --radius-xl:26px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
-  --c-work:#7590B0; --c-inspiration:#D89AAD; --c-milktea:#C4A87F;
+  --c-work:#7590B0; --c-inspiration:#D89AAD; --c-milktea:#FFFCBF;
   --c-thoughts:#9086C8; --c-poop:#B0997F; --c-shower:#6BB8B0;
   --c-housework:#7AAE7A; --c-chore:#D9A05F;
   /* Flat, desaturated accent for UI chrome (buttons, focus, active states) */
@@ -188,7 +188,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-pill-icon{font-size:13px;flex-shrink:0}
 .entry-pill.cat-work{background:#E8F1FA;border-color:var(--c-work);color:var(--c-work)}
 .entry-pill.cat-inspiration{background:#FFF0F3;border-color:var(--c-inspiration);color:var(--c-inspiration)}
-.entry-pill.cat-milktea{background:#FBF5EE;border-color:var(--c-milktea);color:#B89860}
+.entry-pill.cat-milktea{background:#FFFCBF;border-color:#EFE08A;color:#9A7B12}
 .entry-pill.cat-thoughts{background:#EDE8FA;border-color:var(--c-thoughts);color:var(--c-thoughts)}
 .entry-pill.cat-poop{background:#F5EDE0;border-color:var(--c-poop);color:var(--c-poop)}
 .entry-pill.cat-shower{background:#E5FAF9;border-color:var(--c-shower);color:var(--c-shower)}
@@ -197,7 +197,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* 圆点模式(筛选前) */
 .entry-pill.dot-work::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-work);flex-shrink:0;opacity:.8}
 .entry-pill.dot-inspiration::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-inspiration);flex-shrink:0;opacity:.8}
-.entry-pill.dot-milktea::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-milktea);flex-shrink:0;opacity:.8}
+.entry-pill.dot-milktea::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-milktea);border:1px solid rgba(0,0,0,.12);flex-shrink:0;opacity:.9}
 .entry-pill.dot-thoughts::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-thoughts);flex-shrink:0;opacity:.8}
 .entry-pill.dot-poop::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-poop);flex-shrink:0;opacity:.8}
 .entry-pill.dot-shower::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-shower);flex-shrink:0;opacity:.8}
@@ -364,13 +364,13 @@ input,textarea{font-family:inherit;font-size:16px}
 }
 
 /* Category legend */
-.cat-work{background:var(--c-work)}.cat-inspiration{background:var(--c-inspiration)}.cat-milktea{background:var(--c-milktea)}
+.cat-work{background:var(--c-work)}.cat-inspiration{background:var(--c-inspiration)}.cat-milktea{background:var(--c-milktea);border:1px solid rgba(0,0,0,.12);box-sizing:border-box}
 .cat-thoughts{background:var(--c-thoughts)}.cat-poop{background:var(--c-poop)}.cat-shower{background:var(--c-shower)}
 .cat-housework{background:var(--c-housework)}.cat-chore{background:var(--c-chore)}
-.cat-work-bg{background:#E8F1FA}.cat-inspiration-bg{background:#FFF0F3}.cat-milktea-bg{background:#FAF0E6}
+.cat-work-bg{background:#E8F1FA}.cat-inspiration-bg{background:#FFF0F3}.cat-milktea-bg{background:#FFF6C2}
 .cat-thoughts-bg{background:#EDE8FA}.cat-poop-bg{background:#F5EDE0}.cat-shower-bg{background:#E5FAF9}
 .cat-housework-bg{background:#E8F5E9}.cat-chore-bg{background:#FFF0E6}
-.cat-work-text{color:var(--c-work)}.cat-inspiration-text{color:var(--c-inspiration)}.cat-milktea-text{color:var(--c-milktea)}
+.cat-work-text{color:var(--c-work)}.cat-inspiration-text{color:var(--c-inspiration)}.cat-milktea-text{color:#9A7B12}
 .cat-thoughts-text{color:var(--c-thoughts)}.cat-poop-text{color:var(--c-poop)}.cat-shower-text{color:var(--c-shower)}
 .cat-housework-text{color:var(--c-housework)}.cat-chore-text{color:var(--c-chore)}
 
@@ -442,7 +442,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .mt-branch-btn{
   padding:4px 11px;border-radius:14px;font-size:11px;font-weight:600;
   border:1.5px solid var(--c-milktea);transition:all .15s;
-  background:var(--surface);color:var(--c-milktea);cursor:pointer;user-select:none;
+  background:var(--surface);color:#9A7B12;cursor:pointer;user-select:none;
 }
 .mt-branch-btn:active{background:var(--c-milktea);color:#fff}
 
@@ -1480,7 +1480,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 const CATEGORIES = [
   { id:'work', name:'工作记录', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
   { id:'inspiration', name:'灵感记录', icon:'💡', color:'#F0A0B8', bgClass:'cat-inspiration-bg', textClass:'cat-inspiration-text', dotClass:'cat-inspiration' },
-  { id:'milktea', name:'奶茶', icon:'🧋', color:'#C9A87C', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
+  { id:'milktea', name:'奶茶', icon:'🧋', color:'#FFFCBF', textColor:'#9A7B12', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
   { id:'thoughts', name:'今日思考', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
   { id:'poop', name:'💩', icon:'💩', color:'#B8A080', bgClass:'cat-poop-bg', textClass:'cat-poop-text', dotClass:'cat-poop' },
   { id:'shower', name:'洗澡', icon:'🚿', color:'#5CC9C0', bgClass:'cat-shower-bg', textClass:'cat-shower-text', dotClass:'cat-shower' },
@@ -2375,7 +2375,7 @@ const UI = {
     const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
     return `
       <div class="pill-row" data-id="${entry.id}" data-date="${date}"
-        style="--cat-color:${cat.color}"
+        style="--cat-color:${cat.textColor || cat.color}"
         ontouchstart="UI._lpStart(event,'${date}','${entry.id}')"
         ontouchend="UI._lpCancel()"
         ontouchmove="UI._lpCancel()"
@@ -2437,7 +2437,7 @@ const UI = {
         entries.forEach(entry => {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
           const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
-          html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
+          html += `<div class="week-entry" style="--cat-color:${cat.textColor || cat.color}">${UI.escapeHtml(wtext)}</div>`;
         });
       }
       html += `</div></div>`;
@@ -2691,7 +2691,7 @@ const UI = {
     let html = '<div class="filter-bar">';
     html += `<div class="filter-chip ${!filterCat ? 'active' : ''}" style="background:var(--pink-1);color:var(--text-2)" onclick="UI.toggleFilter(null)">全部</div>`;
     CATEGORIES.forEach(cat => {
-      html += `<div class="filter-chip ${filterCat === cat.id ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.color}" onclick="UI.toggleFilter('${cat.id}')"><span class="chip-emoji">${cat.icon}</span>${cat.name && cat.name !== cat.icon ? ' ' + cat.name : ''}</div>`;
+      html += `<div class="filter-chip ${filterCat === cat.id ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.textColor || cat.color}" onclick="UI.toggleFilter('${cat.id}')"><span class="chip-emoji">${cat.icon}</span>${cat.name && cat.name !== cat.icon ? ' ' + cat.name : ''}</div>`;
     });
     html += '</div>';
     return html;
@@ -2704,7 +2704,7 @@ const UI = {
     CATEGORIES.forEach(cat => {
       const active = cat.id === state.selectedCategory;
       const label = (cat.name && cat.name !== cat.icon) ? cat.name : '';
-      html += `<div class="add-bar-cat-chip ${active ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.color}" onclick="UI.selectCategory('${cat.id}')">`
+      html += `<div class="add-bar-cat-chip ${active ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.textColor || cat.color}" onclick="UI.selectCategory('${cat.id}')">`
         + `<span class="add-bar-cat-icon">${cat.icon}</span>`
         + (label ? `<span>${label}</span>` : '')
         + `</div>`;
@@ -2786,7 +2786,7 @@ const UI = {
     if (!btn || !icon) return;
     const cat = CAT_MAP[state.selectedCategory] || CAT_MAP.work;
     icon.textContent = cat.icon;
-    btn.style.color = cat.color;
+    btn.style.color = cat.textColor || cat.color;
     btn.style.borderColor = cat.color;
     btn.style.background = cat.color + '1A';
   },
@@ -2931,7 +2931,7 @@ const UI = {
       html += `<div class="day-modal-cat-group">`;
       html += `<div class="day-modal-cat-label">`;
       html += `<span class="cat-dot" style="background:${cat.color}"></span>`;
-      html += `<span style="color:${cat.color}">${UI.catLabel(cat)}</span>`;
+      html += `<span style="color:${cat.textColor || cat.color}">${UI.catLabel(cat)}</span>`;
       html += `<span class="day-modal-cat-count">${list.length}条</span>`;
       html += `</div>`;
       list.forEach(entry => {
