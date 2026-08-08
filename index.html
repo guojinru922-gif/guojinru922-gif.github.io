@@ -2064,6 +2064,18 @@ const Sync = {
       if (data.taobaoSignin && typeof data.taobaoSignin === 'object' && Object.keys(data.taobaoSignin).length) {
         CK.data.taobaoSignin = Object.assign({}, CK.data.taobaoSignin, data.taobaoSignin);
       }
+      // TOMBSTONE: permanently honor deletions across devices / cloud pulls.
+      // Cloud blob may still contain an item we deleted; filter it out so it
+      // can never resurrect. Tombstone also propagates to other devices.
+      const lt = (CK.data.tomb && Array.isArray(CK.data.tomb.t88)) ? CK.data.tomb.t88 : [];
+      const rt = (data.tomb && Array.isArray(data.tomb.t88)) ? data.tomb.t88 : [];
+      const allT88 = Array.from(new Set([...lt, ...rt]));
+      const ln = (CK.data.tomb && Array.isArray(CK.data.tomb.notes)) ? CK.data.tomb.notes : [];
+      const rn = (data.tomb && Array.isArray(data.tomb.notes)) ? data.tomb.notes : [];
+      const allNotes = Array.from(new Set([...ln, ...rn]));
+      CK.data.tomb = { t88: allT88, notes: allNotes };
+      if (allT88.length) CK.data.taobao88 = CK.data.taobao88.filter(e => !allT88.includes(e.id));
+      if (allNotes.length) allNotes.forEach(d => { delete CK.data.pdd.notes[d]; });
       CK.save();
     }
   },
@@ -3637,7 +3649,8 @@ const CK = {
   data: {
     taobao88: [],
     pdd: { A: { signIns: {} }, B: { signIns: {} }, notes: {} },
-    taobaoSignin: {}
+    taobaoSignin: {},
+    tomb: { t88: [], notes: [] }
   },
   init() {
     this.load();
@@ -3680,6 +3693,9 @@ const CK = {
         }
       }
       if (d.taobaoSignin) this.data.taobaoSignin = d.taobaoSignin;
+      if (d.tomb && typeof d.tomb === 'object') {
+        this.data.tomb = { t88: Array.isArray(d.tomb.t88) ? d.tomb.t88 : [], notes: Array.isArray(d.tomb.notes) ? d.tomb.notes : [] };
+      }
     } catch (e) {}
   },
   save() { localStorage.setItem(this.KEY, JSON.stringify(this.data)); if (supabaseClient) Sync.pushBlob('checkin', this.data); },
@@ -4040,6 +4056,7 @@ const CK = {
     UI.confirm({ title: '\u5220\u9664\u8be5\u676188\u8d2d\u4e70\uff1f', okText: '\u662f', cancelText: '\u5426', danger: true }).then(ok => {
       if (!ok) return;
       this.data.taobao88 = this.data.taobao88.filter(e => e.id !== id);
+      if (!this.data.tomb.t88.includes(id)) this.data.tomb.t88.push(id);
       this.save();
       this.render();
     });
@@ -4126,7 +4143,8 @@ const CK = {
     const inp = document.getElementById('ckPddNoteInput');
     if (!inp) return;
     const v = inp.value.trim();
-    if (v) this.data.pdd.notes[ymd] = v; else delete this.data.pdd.notes[ymd];
+    if (v) { this.data.pdd.notes[ymd] = v; this.data.tomb.notes = this.data.tomb.notes.filter(d => d !== ymd); }
+    else { delete this.data.pdd.notes[ymd]; if (!this.data.tomb.notes.includes(ymd)) this.data.tomb.notes.push(ymd); }
     this.save(); this.render();
     UI.showToast('\u5df2\u4fdd\u5b58');
     this.openDayActions(ymd);
