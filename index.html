@@ -1114,6 +1114,26 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .ck-wrap,.stock-container{max-width:94vw}
   .add-bar{max-width:1000px}
 }
+/* ===== Recurring Events (v2) ===== */
+.rec-badge{font-size:10px;line-height:1;opacity:.65;margin-right:4px;flex:none}
+.pill-row.recurring{background:#FFFDF3}
+.week-entry.recurring{background:#FFFDF3}
+.month-day-pill.recurring{background:#FFFDF3}
+.rec-list{display:flex;flex-direction:column;gap:8px;margin:14px 0}
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#F5F6F8;border:1px solid var(--border)}
+.rec-item-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.rec-item-main{flex:1;min-width:0}
+.rec-item-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-item-rule{font-size:12px;color:var(--text-3);margin-top:2px}
+.rec-item-actions{display:flex;gap:6px}
+.rec-item-btn{font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.rec-presets{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.rec-preset{font-size:13px;padding:8px 12px;border-radius:999px;background:var(--pink-1);color:var(--accent-strong);cursor:pointer}
+.rec-editor{margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.rec-editor-title{font-weight:600;margin-bottom:10px}
+.rec-wd-row{display:flex;flex-wrap:wrap;gap:6px}
+.rec-wd{display:flex;align-items:center;gap:4px;font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:8px}
+.setting-btn.danger{background:#E5484D;color:#fff;border:none}
 </style>
 <script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
 <script>
@@ -1330,6 +1350,10 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
     <button class="setting-btn outline" onclick="UI.exportCSV()">📄 导出记录(CSV)</button>
 
     <div style="height:1px;background:var(--border);margin:20px 0"></div>
+    <button class="setting-btn primary" onclick="UI.openRecurringManager()">🔁 重复事件（生日 / 经期 / 纪念日…）</button>
+    <div class="setting-hint">设置按 天 / 周 / 月 / 年 或固定周期自动重复出现的事件，会自动显示在各日期上。</div>
+
+    <div style="height:1px;background:var(--border);margin:20px 0"></div>
     <div class="setting-hint">
       💡 配置说明：<br>
       1. 在 <strong>supabase.com</strong> 创建免费项目<br>
@@ -1350,6 +1374,59 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
     <div style="display:flex;gap:8px;margin-top:8px">
       <input class="setting-input" id="shareLinkInput" readonly style="flex:1;font-size:12px" onclick="this.select()">
       <button class="setting-btn outline" style="width:auto;padding:12px 16px;white-space:nowrap;margin-top:0" onclick="UI.copyShareLink()">复制</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recurring Events Modal -->
+<div class="modal-overlay" id="recurringModal" onclick="UI.closeModal(event,'recurringModal')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔁 重复事件</div>
+    <div id="recurringList" class="rec-list"></div>
+    <div class="rec-presets">
+      <span class="rec-preset" onclick="UI.openRecurringEditor(null,'birthday')">🎂 生日</span>
+      <span class="rec-preset" onclick="UI.openRecurringEditor(null,'period')">🩸 经期</span>
+      <span class="rec-preset" onclick="UI.openRecurringEditor(null,'anniv')">💍 纪念日</span>
+      <span class="rec-preset" onclick="UI.openRecurringEditor(null,'weekly')">📅 每周</span>
+      <span class="rec-preset" onclick="UI.openRecurringEditor(null,'monthly')">🗓 每月</span>
+    </div>
+    <button class="setting-btn primary" onclick="UI.openRecurringEditor()">＋ 自定义重复事件</button>
+
+    <div id="recEditor" class="rec-editor" style="display:none">
+      <div class="rec-editor-title" id="recEditorTitle">添加重复事件</div>
+      <div class="setting-group">
+        <label class="setting-label">标题</label>
+        <input class="setting-input" id="recTitle" placeholder="例如：妈妈的生日">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">图标（可选 emoji）</label>
+        <input class="setting-input" id="recIcon" placeholder="🎂" maxlength="4">
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">颜色（分类）</label>
+        <select class="setting-input" id="recCategory"></select>
+      </div>
+      <div class="setting-group">
+        <label class="setting-label">重复方式</label>
+        <select class="setting-input" id="recType" onchange="UI.recTypeChanged()">
+          <option value="daily">每天</option>
+          <option value="weekly">每周（选星期）</option>
+          <option value="monthly">每月（几号）</option>
+          <option value="yearly">每年（月-日）</option>
+          <option value="interval">每 N 天（固定周期，如经期）</option>
+        </select>
+      </div>
+      <div id="recTypeOpts"></div>
+      <div class="setting-group">
+        <label class="setting-label">备注（可选）</label>
+        <input class="setting-input" id="recNote" placeholder="备注">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="setting-btn primary" style="flex:1" onclick="UI.saveRecurring()">保存</button>
+        <button class="setting-btn outline" style="flex:1" onclick="UI.recEditorCancel()">取消</button>
+        <button class="setting-btn danger" id="recDeleteBtn" style="flex:1;display:none" onclick="UI.deleteRecurringConfirm()">删除</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1518,6 +1595,7 @@ let state = {
   },
   syncStatus: 'disconnected',
   templates: [],
+  recurring: { items: [], tomb: [] },
 };
 
 let supabaseClient = null;
@@ -1605,6 +1683,11 @@ const Storage = {
         });
         if (demoRemoved) Storage.save();
         if (Array.isArray(data.templates)) state.templates = data.templates;
+        // Recurring events (v2): support both new {items,tomb} and legacy array shape.
+        if (data.recurring) {
+          if (Array.isArray(data.recurring)) state.recurring = { items: data.recurring, tomb: [] };
+          else state.recurring = { items: (data.recurring.items || []), tomb: (data.recurring.tomb || []) };
+        }
       }
     } catch(e) { console.warn('Load failed:', e); }
 
@@ -1686,6 +1769,7 @@ const Storage = {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         entries: state.entries,
         templates: state.templates,
+        recurring: state.recurring,
       }));
     } catch(e) { console.warn('Save failed:', e); }
   },
@@ -2002,6 +2086,7 @@ const Sync = {
   _loadBlobTs() { try { this.blobTs = JSON.parse(localStorage.getItem('sync_blob_ts')) || {}; } catch(e){ this.blobTs = {}; } },
   _saveBlobTs() { try { localStorage.setItem('sync_blob_ts', JSON.stringify(this.blobTs)); } catch(e){} },
   _isEmptyBlob(key, obj) {
+    if (key === 'recurring') return !(obj && ((obj.items && obj.items.length) || (obj.tomb && obj.tomb.length)));
     if (key === 'stockpile') return !Array.isArray(obj) || obj.length === 0;
     if (key === 'checkin') {
       if (!obj || typeof obj !== 'object') return true;
@@ -2047,6 +2132,7 @@ const Sync = {
       // union of all devices (merge happens in _applyBlob, so this is safe).
       if (SP && SP.items && SP.items.length) this.pushBlob('stockpile', SP.items);
       if (CK && CK.data) this.pushBlob('checkin', CK.data);
+      if (state.recurring && (state.recurring.items.length || (state.recurring.tomb && state.recurring.tomb.length))) this.pushBlob('recurring', state.recurring);
       if (changed) { if (SP) SP.render(); if (CK) CK.render(); }
       if (!silent && UI.updateSyncUI) UI.updateSyncUI();
     } catch(e) { console.warn('pullBlobs failed', e); }
@@ -2085,6 +2171,25 @@ const Sync = {
       if (allT88.length) CK.data.taobao88 = CK.data.taobao88.filter(e => !allT88.includes(e.id));
       if (allNotes.length) allNotes.forEach(d => { delete CK.data.pdd.notes[d]; });
       CK.save();
+    }
+    else if (key === 'recurring' && typeof data === 'object') {
+      // Merge by id (remote wins on newer updatedAt), union tombstones so
+      // deletions propagate across devices — same safety model as checkin.
+      const local = state.recurring;
+      const map = {};
+      (local.items || []).forEach(x => { if (x && x.id) map[x.id] = x; });
+      (Array.isArray(data.items) ? data.items : []).forEach(x => {
+        if (x && x.id) { const l = map[x.id]; if (!l || (x.updatedAt || 0) >= (l.updatedAt || 0)) map[x.id] = x; }
+      });
+      const lt = local.tomb || [];
+      const rt = data.tomb || [];
+      const allTomb = Array.from(new Set([...lt, ...rt]));
+      local.tomb = allTomb;
+      let items = Object.values(map);
+      if (allTomb.length) items = items.filter(x => !allTomb.includes(x.id));
+      local.items = items;
+      Storage.save();
+      if (UI && UI.render) UI.render();
     }
   },
   async forceSync() {
@@ -2353,7 +2458,7 @@ const UI = {
 
   renderDayView() {
     const date = state.selectedDate;
-    const allEntries = Entries.getByDate(date);
+    const allEntries = UI.mergedForDate(date).all;
     const filterCat = state.filterCategory;
     const entries = filterCat ? allEntries.filter(e => e.category === filterCat) : allEntries;
     const isToday = DateUtil.isToday(date);
@@ -2380,6 +2485,13 @@ const UI = {
   renderPillRow(entry, date) {
     const cat = CAT_MAP[entry.category] || CAT_MAP.work;
     const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
+    if (entry.recurring) {
+      return `
+      <div class="pill-row recurring" data-id="${entry.id}" data-date="${date}" style="--cat-color:${cat.color}" onclick="UI.openRecurringManager('${entry.defId}')">
+        <span class="rec-badge">🔁</span>
+        <div class="pill-row-text">${UI.escapeHtml(disp)}</div>
+      </div>`;
+    }
     return `
       <div class="pill-row" data-id="${entry.id}" data-date="${date}"
         style="--cat-color:${cat.color}"
@@ -2456,7 +2568,11 @@ const UI = {
         entries.forEach(entry => {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
           const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
-          html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
+          if (entry.recurring) {
+            html += `<div class="week-entry recurring" style="--cat-color:${cat.color}" onclick="event.stopPropagation();UI.openRecurringManager('${entry.defId}')"><span class="rec-badge">🔁</span>${UI.escapeHtml(wtext)}</div>`;
+          } else {
+            html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
+          }
         });
       }
       html += `</div></div>`;
@@ -2531,8 +2647,9 @@ const UI = {
         const isThisMonth = d.getMonth() === currentMonth;
         const isToday = DateUtil.isToday(dateStr);
         const isSelected = dateStr === state.monthSelectedDate;
-        const entries = state.entries[dateStr] || [];
-        const rawCats = Entries.categoriesByDate(dateStr);
+        const m = UI.mergedForDate(dateStr);
+        const entries = m.all;
+        const rawCats = Array.from(new Set(entries.map(e => e.category)));
         const cats = state.filterCategory ? rawCats.filter(c => c === state.filterCategory) : rawCats;
         const filteredCount = state.filterCategory ? entries.filter(e => e.category === state.filterCategory).length : entries.length;
         const displayEntries = state.filterCategory ? entries.filter(e => e.category === state.filterCategory) : entries;
@@ -2566,7 +2683,11 @@ const UI = {
             html += '<div class="month-day-pills">';
             displayEntries.slice(0, 3).forEach(entry => {
               const ec = CAT_MAP[entry.category] || CAT_MAP.work;
-              html += `<div class="month-day-pill" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
+              if (entry.recurring) {
+                html += `<div class="month-day-pill recurring" style="--cat-color:${ec.color}"><span class="rec-badge">🔁</span>${UI.escapeHtml(entry.content)}</div>`;
+              } else {
+                html += `<div class="month-day-pill" style="--cat-color:${ec.color}">${UI.escapeHtml(entry.content)}</div>`;
+              }
             });
             if (displayEntries.length > 3) {
               html += `<div class="month-day-pill more">+${displayEntries.length - 3}</div>`;
@@ -2582,7 +2703,7 @@ const UI = {
     // Inline day detail (when a date is selected in month view)
     if (state.monthSelectedDate) {
       const selDate = state.monthSelectedDate;
-      const selEntries = Entries.getByDate(selDate);
+      const selEntries = UI.mergedForDate(selDate).all;
       const selD = DateUtil.parse(selDate);
       const selIsToday = DateUtil.isToday(selDate);
       html += '<div class="month-day-detail">';
@@ -3165,6 +3286,7 @@ const UI = {
     const pushes = [];
     if (SP && SP.items) pushes.push(Sync.pushBlob('stockpile', SP.items));
     if (CK && CK.data) pushes.push(Sync.pushBlob('checkin', CK.data));
+    if (state.recurring && (state.recurring.items.length || (state.recurring.tomb && state.recurring.tomb.length))) pushes.push(Sync.pushBlob('recurring', state.recurring));
     Promise.all([
       ...pushes,
       Sync.fullSync(),
@@ -4330,6 +4452,218 @@ const GH = {
     if (this.cfg.gistId && this.cfg.token) this.setStatus('ok', '已连接 · Gist: ' + this.cfg.gistId.slice(0, 8));
     else this.setStatus('', '未配置');
   }
+};
+
+/* ===== Recurring Events (v2) ===== */
+const Recurring = {
+  WEEKDAYS: ['周一','周二','周三','周四','周五','周六','周日'], // idx -> JS getDay (idx6 => 0)
+  matchesOn(dateStr) {
+    if (!state.recurring || !state.recurring.items || !state.recurring.items.length) return [];
+    const d = DateUtil.parse(dateStr);
+    const gd = d.getDay();
+    const dom = d.getDate();
+    const mon = d.getMonth() + 1;
+    return state.recurring.items.filter(def => {
+      const r = def.rule || {};
+      if (r.type === 'daily') return true;
+      if (r.type === 'weekly') return Array.isArray(r.days) && r.days.includes(gd);
+      if (r.type === 'monthly') return dom === r.dom;
+      if (r.type === 'yearly') return mon === r.month && dom === r.day;
+      if (r.type === 'interval') {
+        if (!r.anchor || !r.every) return false;
+        const a = DateUtil.parse(r.anchor);
+        const diff = Math.round((d.getTime() - a.getTime()) / 86400000);
+        return diff >= 0 && r.every > 0 && diff % r.every === 0;
+      }
+      return false;
+    });
+  },
+  ruleText(def) {
+    const r = def.rule || {};
+    const wd = i => this.WEEKDAYS[i === 0 ? 6 : i - 1];
+    if (r.type === 'daily') return '每天';
+    if (r.type === 'weekly') return '每周 ' + ((r.days || []).map(wd).join('、') || '—');
+    if (r.type === 'monthly') return '每月 ' + r.dom + ' 号';
+    if (r.type === 'yearly') return '每年 ' + r.month + '月' + r.day + '日';
+    if (r.type === 'interval') return '每 ' + r.every + ' 天（自 ' + r.anchor + '）';
+    return '';
+  },
+  upsert(def) {
+    if (!state.recurring.items) state.recurring.items = [];
+    const i = state.recurring.items.findIndex(x => x.id === def.id);
+    if (i >= 0) state.recurring.items[i] = def; else state.recurring.items.push(def);
+    state.recurring.tomb = (state.recurring.tomb || []).filter(id => id !== def.id);
+    this._persist();
+  },
+  remove(id) {
+    state.recurring.items = (state.recurring.items || []).filter(x => x.id !== id);
+    state.recurring.tomb = Array.from(new Set([...(state.recurring.tomb || []), id]));
+    this._persist();
+  },
+  _persist() {
+    Storage.save();
+    try { if (supabaseClient) Sync.pushBlob('recurring', state.recurring); } catch(e) {}
+    if (UI && UI.render) UI.render();
+  }
+};
+
+UI.mergedForDate = function(date) {
+  const real = Entries.getByDate(date);
+  const rec = Recurring.matchesOn(date).map(def => ({
+    id: 'rec_' + def.id,
+    category: def.category,
+    content: (def.icon ? def.icon + ' ' : '') + def.title,
+    recurring: true,
+    defId: def.id
+  }));
+  return { real, rec, all: rec.concat(real) };
+};
+
+/* ---- Recurring Manager UI ---- */
+UI._recEditingId = null;
+UI._recPresets = {
+  birthday: { icon:'🎂', title:'生日', category:'thoughts', rule:{type:'yearly'} },
+  period:   { icon:'🩸', title:'经期', category:'milktea', rule:{type:'interval', every:28, anchor: DateUtil.format(new Date())} },
+  anniv:    { icon:'💍', title:'纪念日', category:'thoughts', rule:{type:'yearly'} },
+  weekly:   { icon:'', title:'', category:'work', rule:{type:'weekly', days:[]} },
+  monthly:  { icon:'', title:'', category:'work', rule:{type:'monthly', dom:1} },
+};
+UI.openRecurringManager = function(defId) {
+  const sel = document.getElementById('recCategory');
+  if (sel && !sel.options.length) {
+    CATEGORIES.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.icon + ' ' + c.name;
+      sel.appendChild(o);
+    });
+  }
+  UI.recEditorCancel();
+  UI.renderRecurringList();
+  document.getElementById('recurringModal').classList.add('show');
+  if (defId) UI.openRecurringEditor(defId);
+};
+UI.renderRecurringList = function() {
+  const box = document.getElementById('recurringList');
+  if (!box) return;
+  const items = (state.recurring.items || []);
+  if (!items.length) {
+    box.innerHTML = '<div class="setting-hint" style="text-align:center;padding:12px 0">还没有重复事件，点下方「＋ 自定义」或用上面的快捷预设添加吧～</div>';
+    return;
+  }
+  box.innerHTML = items.map(def => {
+    const cat = CAT_MAP[def.category] || CAT_MAP.work;
+    return `<div class="rec-item">
+      <div class="rec-item-dot" style="background:${cat.color}"></div>
+      <div class="rec-item-main">
+        <div class="rec-item-title">${(def.icon ? def.icon + ' ' : '') + UI.escapeHtml(def.title)}</div>
+        <div class="rec-item-rule">${UI.escapeHtml(Recurring.ruleText(def))}</div>
+      </div>
+      <div class="rec-item-actions">
+        <button class="rec-item-btn" onclick="UI.openRecurringEditor('${def.id}')">编辑</button>
+        <button class="rec-item-btn" onclick="UI.deleteRecurringConfirm('${def.id}')">删除</button>
+      </div>
+    </div>`;
+  }).join('');
+};
+UI.openRecurringEditor = function(defId, preset) {
+  UI._recEditingId = defId || null;
+  const p = preset ? UI._recPresets[preset] : null;
+  const def = defId ? (state.recurring.items || []).find(x => x.id === defId) : null;
+  document.getElementById('recEditorTitle').textContent = defId ? '编辑重复事件' : '添加重复事件';
+  document.getElementById('recTitle').value = def ? def.title : (p ? p.title : '');
+  document.getElementById('recIcon').value = def ? (def.icon || '') : (p ? p.icon : '');
+  const sel = document.getElementById('recCategory');
+  sel.value = def ? def.category : (p ? p.category : 'work');
+  const rule = def ? def.rule : (p ? p.rule : { type:'weekly', days:[] });
+  document.getElementById('recType').value = rule.type || 'weekly';
+  document.getElementById('recNote').value = def ? (def.note || '') : '';
+  UI.recTypeChanged(rule);
+  document.getElementById('recDeleteBtn').style.display = defId ? '' : 'none';
+  document.getElementById('recEditor').style.display = 'block';
+};
+UI.recTypeChanged = function(presetRule) {
+  const type = document.getElementById('recType').value;
+  const box = document.getElementById('recTypeOpts');
+  let h = '';
+  if (type === 'weekly') {
+    const days = (presetRule && presetRule.days) || [];
+    h += '<div class="setting-label" style="margin-bottom:6px">选择星期</div><div class="rec-wd-row">';
+    Recurring.WEEKDAYS.forEach((name, idx) => {
+      const js = idx === 6 ? 0 : idx + 1;
+      const checked = days.includes(js) ? 'checked' : '';
+      h += `<label class="rec-wd"><input type="checkbox" class="rec-wd" value="${js}" ${checked}>${name}</label>`;
+    });
+    h += '</div>';
+  } else if (type === 'monthly') {
+    const dom = (presetRule && presetRule.dom) || 1;
+    h += '<label class="setting-label">每月几号</label><input class="setting-input" id="recDom" type="number" min="1" max="31" value="'+dom+'">';
+  } else if (type === 'yearly') {
+    const mon = (presetRule && presetRule.month) || 1;
+    const day = (presetRule && presetRule.day) || 1;
+    h += '<div style="display:flex;gap:8px"><input class="setting-input" id="recMonth" type="number" min="1" max="12" placeholder="月" value="'+mon+'"><input class="setting-input" id="recDay" type="number" min="1" max="31" placeholder="日" value="'+day+'"></div>';
+  } else if (type === 'interval') {
+    const every = (presetRule && presetRule.every) || 28;
+    const anchor = (presetRule && presetRule.anchor) || DateUtil.format(new Date());
+    h += '<label class="setting-label">每几天重复一次</label><input class="setting-input" id="recEvery" type="number" min="1" max="365" value="'+every+'">';
+    h += '<label class="setting-label" style="margin-top:8px">起始日期</label><input class="setting-input" id="recAnchor" type="date" value="'+anchor+'">';
+  }
+  box.innerHTML = h;
+};
+UI.saveRecurring = function() {
+  const title = document.getElementById('recTitle').value.trim();
+  if (!title) { UI.showToast('请填写标题'); return; }
+  const type = document.getElementById('recType').value;
+  const rule = { type };
+  if (type === 'weekly') {
+    const days = [];
+    document.querySelectorAll('#recTypeOpts .rec-wd:checked').forEach(c => days.push(+c.value));
+    if (!days.length) { UI.showToast('请至少选择一个星期'); return; }
+    rule.days = days;
+  } else if (type === 'monthly') {
+    const dom = +document.getElementById('recDom').value;
+    if (!dom || dom < 1 || dom > 31) { UI.showToast('请输入 1-31 的日期'); return; }
+    rule.dom = dom;
+  } else if (type === 'yearly') {
+    const mon = +document.getElementById('recMonth').value;
+    const day = +document.getElementById('recDay').value;
+    if (!mon || mon < 1 || mon > 12 || !day || day < 1 || day > 31) { UI.showToast('请输入有效的月-日'); return; }
+    rule.month = mon; rule.day = day;
+  } else if (type === 'interval') {
+    const every = +document.getElementById('recEvery').value;
+    const anchor = document.getElementById('recAnchor').value;
+    if (!every || every < 1) { UI.showToast('请输入大于 0 的天数'); return; }
+    if (!anchor) { UI.showToast('请选择起始日期'); return; }
+    rule.every = every; rule.anchor = anchor;
+  }
+  const def = {
+    id: UI._recEditingId || ('rec_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5)),
+    title,
+    icon: document.getElementById('recIcon').value.trim(),
+    category: document.getElementById('recCategory').value,
+    rule,
+    note: document.getElementById('recNote').value.trim(),
+    updatedAt: Date.now()
+  };
+  Recurring.upsert(def);
+  UI.showToast('已保存');
+  UI.recEditorCancel();
+  UI.renderRecurringList();
+};
+UI.deleteRecurringConfirm = function(defId) {
+  defId = defId || UI._recEditingId;
+  if (!defId) return;
+  UI.confirm({ message: '确定删除这个重复事件吗？', okText: '删除', cancelText: '取消', danger: true }).then(ok => {
+    if (!ok) return;
+    Recurring.remove(defId);
+    UI.showToast('已删除');
+    UI.recEditorCancel();
+    UI.renderRecurringList();
+  });
+};
+UI.recEditorCancel = function() {
+  UI._recEditingId = null;
+  const ed = document.getElementById('recEditor');
+  if (ed) ed.style.display = 'none';
 };
 
 /* ===== Init ===== */
