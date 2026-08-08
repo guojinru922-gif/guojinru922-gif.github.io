@@ -260,11 +260,11 @@ input,textarea{font-family:inherit;font-size:16px}
 .empty-cta:active{transform:scale(.96)}
 
 /* ===== Week View (Apple Calendar Style) ===== */
-.week-view-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none}
+.week-view-wrap{overflow:visible;padding-bottom:0}
 .week-view-wrap::-webkit-scrollbar{display:none}
-.week-view-table{display:flex;min-width:max-content;gap:6px;padding:0 2px}
+.week-view-table{display:flex;width:100%;min-width:0;gap:4px;padding:0 2px}
 .week-col{
-  flex:0 0 78px;min-width:78px;display:flex;flex-direction:column;
+  flex:1 1 0;min-width:0;display:flex;flex-direction:column;
 }
 .week-col:last-child{border-right:none}
 .week-col-header{
@@ -2454,16 +2454,20 @@ const UI = {
   },
 
   scrollWeekViewToToday() {
+    // Mobile week table now fits all 7 columns (overflow:visible), so centering
+    // "today" horizontally would be a no-op. Skip the work to also avoid any
+    // accidental vertical scroll iOS Safari sometimes triggers on scrollIntoView.
     const wrap = document.querySelector('.week-view-wrap');
     if (!wrap) return;
-    const todayCol = wrap.querySelector('.week-col-today');
-    if (!todayCol) return;
-    // Center the today column horizontally; leave vertical scroll untouched.
-    if (typeof todayCol.scrollIntoView === 'function') {
-      todayCol.scrollIntoView({ inline: 'center', block: 'nearest' });
-    } else {
-      const target = todayCol.offsetLeft - (wrap.clientWidth - todayCol.offsetWidth) / 2;
-      wrap.scrollLeft = Math.max(0, target);
+    if (getComputedStyle(wrap).overflowX === 'auto' || getComputedStyle(wrap).overflowX === 'scroll') {
+      const todayCol = wrap.querySelector('.week-col-today');
+      if (!todayCol) return;
+      if (typeof todayCol.scrollIntoView === 'function') {
+        todayCol.scrollIntoView({ inline: 'center', block: 'nearest' });
+      } else {
+        const target = todayCol.offsetLeft - (wrap.clientWidth - todayCol.offsetWidth) / 2;
+        wrap.scrollLeft = Math.max(0, target);
+      }
     }
   },
 
