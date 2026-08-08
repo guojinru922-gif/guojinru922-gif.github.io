@@ -260,11 +260,11 @@ input,textarea{font-family:inherit;font-size:16px}
 .empty-cta:active{transform:scale(.96)}
 
 /* ===== Week View (Apple Calendar Style) ===== */
-.week-view-wrap{overflow:visible;padding-bottom:0}
+.week-view-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none}
 .week-view-wrap::-webkit-scrollbar{display:none}
-.week-view-table{display:flex;width:100%;min-width:0;gap:4px;padding:0 2px}
+.week-view-table{display:flex;min-width:max-content;gap:6px;padding:0 2px}
 .week-col{
-  flex:1 1 0;min-width:0;display:flex;flex-direction:column;
+  flex:0 0 78px;min-width:78px;display:flex;flex-direction:column;
 }
 .week-col:last-child{border-right:none}
 .week-col-header{
@@ -295,7 +295,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .week-entry{
   margin-bottom:6px;padding:6px 7px;border-radius:7px;
   font-size:12px;font-weight:500;color:var(--text-1);line-height:1.5;
-  word-break:break-word;cursor:pointer;transition:transform .15s;
+  overflow-wrap:break-word;word-break:normal;cursor:pointer;transition:transform .15s;
   background:#fff;
   border:1px solid var(--border-light);
   border-left:3px solid var(--cat-color,#ccc);
@@ -2454,21 +2454,19 @@ const UI = {
   },
 
   scrollWeekViewToToday() {
-    // Mobile week table now fits all 7 columns (overflow:visible), so centering
-    // "today" horizontally would be a no-op. Skip the work to also avoid any
-    // accidental vertical scroll iOS Safari sometimes triggers on scrollIntoView.
     const wrap = document.querySelector('.week-view-wrap');
     if (!wrap) return;
-    if (getComputedStyle(wrap).overflowX === 'auto' || getComputedStyle(wrap).overflowX === 'scroll') {
-      const todayCol = wrap.querySelector('.week-col-today');
-      if (!todayCol) return;
-      if (typeof todayCol.scrollIntoView === 'function') {
-        todayCol.scrollIntoView({ inline: 'center', block: 'nearest' });
-      } else {
-        const target = todayCol.offsetLeft - (wrap.clientWidth - todayCol.offsetWidth) / 2;
-        wrap.scrollLeft = Math.max(0, target);
-      }
-    }
+    const todayCol = wrap.querySelector('.week-col-today');
+    if (!todayCol) return;
+    // Only scroll if today is currently NOT fully visible horizontally.
+    // If already fully visible, do nothing — avoids the "clicking column
+    // shifts the view back to today" issue. If off-screen, left-align
+    // today so days-after-today remain visible to the right.
+    const wrapRect = wrap.getBoundingClientRect();
+    const colRect = todayCol.getBoundingClientRect();
+    if (colRect.left >= wrapRect.left && colRect.right <= wrapRect.right) return;
+    const offsetLeft = colRect.left - wrapRect.left + wrap.scrollLeft;
+    wrap.scrollLeft = Math.max(0, offsetLeft - 8);
   },
 
   renderMonthView() {
