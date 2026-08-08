@@ -1753,8 +1753,9 @@ const Sync = {
       Sync.setStatus('connected');
       UI.showToast('✅ 正在同步数据...');
       Sync.fullSync();
+      Sync.pullBlobs(true, true); // 手动连接时也立即拉取签到/囤货数据，避免遗漏
       TimerManager.clearInterval('sync');
-      TimerManager.interval('sync', () => Sync.pull(), 20000);
+      TimerManager.interval('sync', () => { Sync.pull(); Sync.pullBlobs(true); }, 20000);
       return true;
     } catch(e) {
       UI.showToast('❌ 连接失败: ' + e.message);
