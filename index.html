@@ -2453,20 +2453,26 @@ const UI = {
     return html;
   },
 
-  scrollWeekViewToToday() {
+  scrollWeekViewToToday(smooth = false) {
     const wrap = document.querySelector('.week-view-wrap');
     if (!wrap) return;
     const todayCol = wrap.querySelector('.week-col-today');
     if (!todayCol) return;
-    // Only scroll if today is currently NOT fully visible horizontally.
-    // If already fully visible, do nothing — avoids the "clicking column
-    // shifts the view back to today" issue. If off-screen, left-align
-    // today so days-after-today remain visible to the right.
     const wrapRect = wrap.getBoundingClientRect();
     const colRect = todayCol.getBoundingClientRect();
+    // Already fully visible: don't disturb. (Avoids the "click Today → view
+    // jumps and flashes" feeling when nothing actually needs to change.)
     if (colRect.left >= wrapRect.left && colRect.right <= wrapRect.right) return;
+    // Position today at ~25% from the left edge of the visible area.
+    //   → user sees today + 1-2 future days to the right.
+    //   → past days (Mon-Fri) can be scrolled into view from the left.
     const offsetLeft = colRect.left - wrapRect.left + wrap.scrollLeft;
-    wrap.scrollLeft = Math.max(0, offsetLeft - 8);
+    const target = Math.max(0, offsetLeft - Math.round(wrap.clientWidth * 0.25));
+    if (smooth) {
+      wrap.scrollTo({ left: target, behavior: 'smooth' });
+    } else {
+      wrap.scrollLeft = target;
+    }
   },
 
   renderMonthView() {
@@ -3199,8 +3205,12 @@ const UI = {
 
   goToToday() {
     const today = new Date();
+    const todayStr = DateUtil.format(today);
+    const wasAlreadyToday = DateUtil.format(state.currentDate) === todayStr;
+    const oldWeekStart = DateUtil.format(DateUtil.getWeekDates(state.currentDate)[0]);
+
     state.currentDate = today;
-    state.selectedDate = DateUtil.format(today);
+    state.selectedDate = todayStr;
     // Respect the user's current view (day/week/month) — do NOT force day,
     // otherwise clicking "今天" in week/month jumps back to day view.
     if (state.view === 'month') state.monthSelectedDate = null;
@@ -3209,12 +3219,39 @@ const UI = {
     });
     const addBar = document.getElementById('addBar');
     if (addBar) addBar.classList.toggle('hidden', state.view === 'month');
-    UI.render();
-    UI.renderDateStrip();
-    UI.updateDateStripVisibility();
-    UI.updateDateStripMonth();
-    if (state.view === 'day') UI.scrollDateStripToSelected();
-    if (state.view === 'week') setTimeout(() => UI.scrollWeekViewToToday(), 60);
+
+    if (state.view === 'week') {
+      // Detect "real week change" vs "click 今天 while already in today's week".
+      // If we're already in today's week, skip the destructive re-render entirely
+      // (avoids the flash from container.innerHTML replacement). Only smooth-scroll
+      // if the today column isn't already positioned where we want it.
+      const newWeekStart = DateUtil.format(DateUtil.getWeekDates(today)[0]);
+      if (oldWeekStart !== newWeekStart) {
+        // Crossed a week boundary — must re-render to show today's week.
+        UI.render();
+        UI.renderDateStrip();
+        UI.updateDateStripVisibility();
+        UI.updateDateStripMonth();
+        setTimeout(() => UI.scrollWeekViewToToday(false), 60);
+      } else {
+        // Already in this week — no re-render, no flash. If user scrolled horizontally
+        // away, ease-scroll back. Otherwise no-op.
+        setTimeout(() => UI.scrollWeekViewToToday(true), 60);
+      }
+    } else if (state.view === 'day') {
+      if (!wasAlreadyToday) {
+        UI.render();
+        UI.renderDateStrip();
+        UI.updateDateStripVisibility();
+        UI.updateDateStripMonth();
+      }
+      UI.scrollDateStripToSelected();
+    } else {
+      UI.render();
+      UI.renderDateStrip();
+      UI.updateDateStripVisibility();
+      UI.updateDateStripMonth();
+    }
   },
 
   navPrev() {
