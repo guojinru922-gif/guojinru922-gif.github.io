@@ -435,6 +435,17 @@ input,textarea{font-family:inherit;font-size:16px}
   cursor:pointer;transition:all .2s;background:var(--surface);user-select:none;
 }
 .shower-toggle.on{border-color:var(--c-shower);background:rgba(92,201,192,.1);color:var(--c-shower)}
+/* Milktea quick-branch panel (like shower's branch events) */
+.milktea-options{display:none;flex-wrap:wrap;gap:5px;margin-bottom:6px;align-items:center}
+.milktea-options.show{display:flex}
+.milktea-branch-group{display:flex;gap:4px;flex-wrap:wrap}
+.mt-branch-btn{
+  padding:4px 11px;border-radius:14px;font-size:11px;font-weight:600;
+  border:1.5px solid var(--c-milktea);transition:all .15s;
+  background:var(--surface);color:var(--c-milktea);cursor:pointer;user-select:none;
+}
+.mt-branch-btn:active{background:var(--c-milktea);color:#fff}
+
 .input-row{display:flex;gap:8px;align-items:flex-end}
 .input-area{
   flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 14px;
@@ -1243,6 +1254,11 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
     <div class="shower-divider"></div>
     <div class="shower-toggle" data-opt="lotion" onclick="UI.toggleShowerOption('lotion')">身体乳</div>
     <div class="shower-toggle" data-opt="mask" onclick="UI.toggleShowerOption('mask')">面膜</div>
+  </div>
+  <div class="milktea-options" id="milkteaOptions">
+    <div class="milktea-branch-group">
+      <div class="mt-branch-btn" onclick="UI.quickMilktea('咖啡☕️')">☕️ 咖啡</div>
+    </div>
   </div>
   <div class="input-row">
     <button class="add-type-btn" id="addTypeBtn" type="button" aria-label="展开记录类型选择" title="点击展开类型"><span id="addTypeIcon">💼</span></button>
@@ -2687,7 +2703,8 @@ const UI = {
     state.selectedCategory = catId;
     UI.updateAddBarInfo();
     const showerPanel = document.getElementById('showerOptions');
-    const hidePanels = () => { showerPanel.classList.remove('show'); };
+    const mtPanel = document.getElementById('milkteaOptions');
+    const hidePanels = () => { showerPanel.classList.remove('show'); mtPanel.classList.remove('show'); };
     const input = document.getElementById('entryInput');
     if (catId === 'shower') {
       hidePanels();
@@ -2696,6 +2713,14 @@ const UI = {
       input.disabled = true;
       input.style.opacity = '0.5';
       UI.generateShowerContent();
+    } else if (catId === 'milktea') {
+      // 奶茶：显示分支快捷事件面板；输入框保持可用，可手输自定义奶茶事件
+      hidePanels();
+      mtPanel.classList.add('show');
+      input.placeholder = '可手输自定义奶茶，或点上方快捷事件';
+      input.disabled = false;
+      input.style.opacity = '1';
+      input.value = '';
     } else if (catId === 'poop') {
       hidePanels();
       input.placeholder = '记录此刻...';
@@ -2727,6 +2752,19 @@ const UI = {
     UI.updateTypePickerActive();
     UI.updateTypeBtn();
     UI.updateSendBtn();
+  },
+
+  // 奶茶分支快捷事件：点一下即记一条到奶茶大分类
+  quickMilktea(content) {
+    const entry = Entries.add('milktea', content);
+    UI.render();
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`.pill-row[data-id="${entry.id}"]`);
+      if (row) { row.scrollIntoView({ behavior:'smooth', block:'center' }); row.classList.add('flash-new'); }
+    });
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) { sendBtn.classList.add('pop'); setTimeout(() => sendBtn.classList.remove('pop'), 400); }
+    UI.showToast('🧋 ' + content + ' 已记录');
   },
 
   updateTypeBtn() {
