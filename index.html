@@ -267,6 +267,10 @@ input,textarea{font-family:inherit;font-size:16px}
   flex:0 0 78px;min-width:78px;display:flex;flex-direction:column;
 }
 .week-col:last-child{border-right:none}
+/* Monday = start of a new week: a slightly stronger divider so the continuous
+   strip still reads as weeks (past → today → future all in one flow). */
+.week-col-ws{border-left:2px solid var(--border)}
+.week-col-sat,.week-col-sun{background:#FAFAFB}
 .week-col-header{
   text-align:center;padding:10px 3px 8px;
   border-bottom:1px solid var(--border-light);
@@ -2403,8 +2407,19 @@ const UI = {
     return h;
   },
 
+  getWeekViewDates() {
+    // Continuous timeline: 2 weeks before + current week + 3 weeks after = 6 weeks
+    // (42 columns). Past, today and future all live in ONE scrollable strip, so
+    // sliding right from today reveals future days instead of hitting a blank edge.
+    const weekStart = DateUtil.getWeekDates(state.currentDate)[0];
+    const start = DateUtil.addDays(weekStart, -14);
+    const arr = [];
+    for (let i = 0; i < 42; i++) arr.push(DateUtil.addDays(start, i));
+    return arr;
+  },
+
   renderWeekView() {
-    const weekDates = DateUtil.getWeekDates(state.currentDate);
+    const dates = UI.getWeekViewDates();
     const filterCat = state.filterCategory;
     const wdNames = ['日','一','二','三','四','五','六'];
     let html = '';
@@ -2414,15 +2429,16 @@ const UI = {
     html += '<div class="week-view-wrap">';
     html += '<div class="week-view-table">';
 
-    weekDates.forEach(d => {
+    dates.forEach(d => {
       const dateStr = DateUtil.format(d);
       const allEntries = Entries.getByDate(dateStr);
       const isToday = DateUtil.isToday(dateStr);
       const wd = d.getDay();
       const todayClass = isToday ? ' week-col-today' : '';
       const sunClass = (wd === 0) ? ' week-col-sun' : '';
+      const wsClass = (wd === 1) ? ' week-col-ws' : '';
 
-      html += `<div class="week-col${todayClass}${sunClass}" onclick="UI.selectDate('${dateStr}')">`;
+      html += `<div class="week-col${todayClass}${sunClass}${wsClass}" data-date="${dateStr}" onclick="UI.selectDate('${dateStr}')">`;
 
       // Header: weekday + date number
       html += `<div class="week-col-header">`;
@@ -2447,31 +2463,34 @@ const UI = {
     });
 
     html += '</div></div>';
-    // Mobile: if the rendered week contains today, center the today column
-    const hasToday = weekDates.some(d => DateUtil.isToday(DateUtil.format(d)));
-    if (UI.isMobile() && hasToday) setTimeout(() => UI.scrollWeekViewToToday(), 60);
+    // Anchor today (or the current week) ~30% from the left so the user sees
+    // past days to the left and future days to the right, all in one connected strip.
+    setTimeout(() => UI.applyWeekViewScroll(state.currentDate, 0.3, false), 60);
     return html;
   },
 
   scrollWeekViewToToday(smooth = false) {
+    // Back-compat shim — scroll the today column into view.
+    UI.applyWeekViewScroll(new Date(), 0.3, smooth);
+  },
+
+  applyWeekViewScroll(date, ratio, smooth) {
     const wrap = document.querySelector('.week-view-wrap');
     if (!wrap) return;
-    const todayCol = wrap.querySelector('.week-col-today');
-    if (!todayCol) return;
+    const keyStr = DateUtil.format(date);
+    let target = null;
+    wrap.querySelectorAll('.week-col').forEach(c => {
+      if (c.dataset.date === keyStr) target = c;
+    });
+    if (!target) return;
     const wrapRect = wrap.getBoundingClientRect();
-    const colRect = todayCol.getBoundingClientRect();
-    // Already fully visible: don't disturb. (Avoids the "click Today → view
-    // jumps and flashes" feeling when nothing actually needs to change.)
-    if (colRect.left >= wrapRect.left && colRect.right <= wrapRect.right) return;
-    // Position today at ~25% from the left edge of the visible area.
-    //   → user sees today + 1-2 future days to the right.
-    //   → past days (Mon-Fri) can be scrolled into view from the left.
+    const colRect = target.getBoundingClientRect();
     const offsetLeft = colRect.left - wrapRect.left + wrap.scrollLeft;
-    const target = Math.max(0, offsetLeft - Math.round(wrap.clientWidth * 0.25));
+    const left = Math.max(0, offsetLeft - Math.round(wrap.clientWidth * (ratio || 0.3)));
     if (smooth) {
-      wrap.scrollTo({ left: target, behavior: 'smooth' });
+      wrap.scrollTo({ left, behavior: 'smooth' });
     } else {
-      wrap.scrollLeft = target;
+      wrap.scrollLeft = left;
     }
   },
 
@@ -3207,7 +3226,6 @@ const UI = {
     const today = new Date();
     const todayStr = DateUtil.format(today);
     const wasAlreadyToday = DateUtil.format(state.currentDate) === todayStr;
-    const oldWeekStart = DateUtil.format(DateUtil.getWeekDates(state.currentDate)[0]);
 
     state.currentDate = today;
     state.selectedDate = todayStr;
@@ -3221,22 +3239,19 @@ const UI = {
     if (addBar) addBar.classList.toggle('hidden', state.view === 'month');
 
     if (state.view === 'week') {
-      // Detect "real week change" vs "click 今天 while already in today's week".
-      // If we're already in today's week, skip the destructive re-render entirely
-      // (avoids the flash from container.innerHTML replacement). Only smooth-scroll
-      // if the today column isn't already positioned where we want it.
-      const newWeekStart = DateUtil.format(DateUtil.getWeekDates(today)[0]);
-      if (oldWeekStart !== newWeekStart) {
-        // Crossed a week boundary — must re-render to show today's week.
+      if (DateUtil.format(state.currentDate) === todayStr) {
+        // Already anchored on today's week → no re-render (no flash). Just
+        // ease the today column back into view if the user had scrolled away.
+        setTimeout(() => UI.applyWeekViewScroll(today, 0.3, true), 60);
+      } else {
+        // Crossed into a different week (user had navigated away) → re-render so
+        // today is back in the strip, then land on it.
+        state.currentDate = today;
+        state.selectedDate = todayStr;
         UI.render();
         UI.renderDateStrip();
         UI.updateDateStripVisibility();
         UI.updateDateStripMonth();
-        setTimeout(() => UI.scrollWeekViewToToday(false), 60);
-      } else {
-        // Already in this week — no re-render, no flash. If user scrolled horizontally
-        // away, ease-scroll back. Otherwise no-op.
-        setTimeout(() => UI.scrollWeekViewToToday(true), 60);
       }
     } else if (state.view === 'day') {
       if (!wasAlreadyToday) {
