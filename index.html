@@ -41,7 +41,7 @@
   --radius:16px; --radius-sm:12px; --radius-lg:22px; --radius-xl:26px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
-  --c-work:#7590B0; --c-inspiration:#D89AAD; --c-milktea:#FFCDB2;
+  --c-work:#7590B0; --c-milktea:#D89AAD;
   --c-thoughts:#9086C8; --c-poop:#B0997F; --c-shower:#6BB8B0;
   --c-housework:#7AAE7A; --c-chore:#D9A05F;
   /* Flat, desaturated accent for UI chrome (buttons, focus, active states) */
@@ -190,8 +190,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-pill:active{transform:scale(.96)}
 .entry-pill-icon{font-size:13px;flex-shrink:0}
 .entry-pill.cat-work{background:#E8F1FA;border-color:var(--c-work);color:var(--c-work)}
-.entry-pill.cat-inspiration{background:#FFF0F3;border-color:var(--c-inspiration);color:var(--c-inspiration)}
-.entry-pill.cat-milktea{background:#FFCDB2;border-color:#E8A88A;color:#A04A2F}
+.entry-pill.cat-milktea{background:#FBEDF1;border-color:var(--c-milktea);color:#A04A6A}
 .entry-pill.cat-thoughts{background:#EDE8FA;border-color:var(--c-thoughts);color:var(--c-thoughts)}
 .entry-pill.cat-poop{background:#F5EDE0;border-color:var(--c-poop);color:var(--c-poop)}
 .entry-pill.cat-shower{background:#E5FAF9;border-color:var(--c-shower);color:var(--c-shower)}
@@ -199,8 +198,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-pill.cat-chore{background:#FFF0E6;border-color:var(--c-chore);color:var(--c-chore)}
 /* 圆点模式(筛选前) */
 .entry-pill.dot-work::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-work);flex-shrink:0;opacity:.8}
-.entry-pill.dot-inspiration::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-inspiration);flex-shrink:0;opacity:.8}
-.entry-pill.dot-milktea::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-milktea);border:1px solid rgba(0,0,0,.12);flex-shrink:0;opacity:.9}
+.entry-pill.dot-milktea::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-milktea);flex-shrink:0;opacity:.9}
 .entry-pill.dot-thoughts::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-thoughts);flex-shrink:0;opacity:.8}
 .entry-pill.dot-poop::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-poop);flex-shrink:0;opacity:.8}
 .entry-pill.dot-shower::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c-shower);flex-shrink:0;opacity:.8}
@@ -308,10 +306,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .week-entry:active{transform:scale(.97);opacity:.85}
 .week-empty{font-size:11px;color:var(--text-3);text-align:center;padding:24px 2px}
 /* Milktea items: filled peach so they match the category option color */
-.pill-row.cat-milktea{background:#FFCDB2;border-color:#E8A88A;border-left:4px solid #E8A88A}
-.pill-row.cat-milktea .pill-row-text{color:#A04A2F}
-.week-entry.cat-milktea{background:#FFCDB2;border-color:#E8A88A;border-left:3px solid #E8A88A;color:#A04A2F}
-.month-day-pill.cat-milktea{background:#FFCDB2;border:1px solid #E8A88A;color:#A04A2F}
+/* No per-cat fill for pill-row / week-entry / month-day-pill — they all keep the default
+   white-card + colored left-border look (--cat-color). Same as work / thoughts / etc. */
 /* ===== Unified Filter Bar ===== */
 .filter-bar{
   display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding:2px 0 4px;
@@ -372,13 +368,13 @@ input,textarea{font-family:inherit;font-size:16px}
 }
 
 /* Category legend */
-.cat-work{background:var(--c-work)}.cat-inspiration{background:var(--c-inspiration)}.cat-milktea{background:var(--c-milktea);border:1px solid rgba(0,0,0,.12);box-sizing:border-box}
+.cat-work{background:var(--c-work)}.cat-milktea{background:var(--c-milktea)}
 .cat-thoughts{background:var(--c-thoughts)}.cat-poop{background:var(--c-poop)}.cat-shower{background:var(--c-shower)}
 .cat-housework{background:var(--c-housework)}.cat-chore{background:var(--c-chore)}
-.cat-work-bg{background:#E8F1FA}.cat-inspiration-bg{background:#FFF0F3}.cat-milktea-bg{background:#FFE3D4}
+.cat-work-bg{background:#E8F1FA}.cat-milktea-bg{background:#FBEDF1}
 .cat-thoughts-bg{background:#EDE8FA}.cat-poop-bg{background:#F5EDE0}.cat-shower-bg{background:#E5FAF9}
 .cat-housework-bg{background:#E8F5E9}.cat-chore-bg{background:#FFF0E6}
-.cat-work-text{color:var(--c-work)}.cat-inspiration-text{color:var(--c-inspiration)}.cat-milktea-text{color:#A04A2F}
+.cat-work-text{color:var(--c-work)}.cat-milktea-text{color:#A04A6A}
 .cat-thoughts-text{color:var(--c-thoughts)}.cat-poop-text{color:var(--c-poop)}.cat-shower-text{color:var(--c-shower)}
 .cat-housework-text{color:var(--c-housework)}.cat-chore-text{color:var(--c-chore)}
 
@@ -450,9 +446,9 @@ input,textarea{font-family:inherit;font-size:16px}
 .mt-branch-btn{
   padding:4px 11px;border-radius:14px;font-size:11px;font-weight:600;
   border:1.5px solid var(--c-milktea);transition:all .15s;
-  background:var(--surface);color:#A04A2F;cursor:pointer;user-select:none;
+  background:var(--surface);color:#A04A6A;cursor:pointer;user-select:none;
 }
-.mt-branch-btn:active{background:#A04A2F;color:#fff;border-color:#A04A2F}
+.mt-branch-btn:active{background:#A04A6A;color:#fff;border-color:#A04A6A}
 
 .input-row{display:flex;gap:8px;align-items:flex-end}
 .input-area{
@@ -1487,8 +1483,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 /* ===== Categories ===== */
 const CATEGORIES = [
   { id:'work', name:'工作记录', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
-  { id:'inspiration', name:'灵感记录', icon:'💡', color:'#F0A0B8', bgClass:'cat-inspiration-bg', textClass:'cat-inspiration-text', dotClass:'cat-inspiration' },
-  { id:'milktea', name:'奶茶', icon:'🧋', color:'#FFCDB2', textColor:'#A04A2F', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
+  { id:'milktea', name:'奶茶', icon:'🧋', color:'#D89AAD', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
   { id:'thoughts', name:'今日思考', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
   { id:'poop', name:'💩', icon:'💩', color:'#B8A080', bgClass:'cat-poop-bg', textClass:'cat-poop-text', dotClass:'cat-poop' },
   { id:'shower', name:'洗澡', icon:'🚿', color:'#5CC9C0', bgClass:'cat-shower-bg', textClass:'cat-shower-text', dotClass:'cat-shower' },
@@ -1641,7 +1636,7 @@ const Storage = {
       { d: -3, cat: 'milktea', txt: '午后红茶拿铁' },
       { d: -3, cat: 'shower', txt: '🛀 洗澡 身体乳' },
       { d: -2, cat: 'work', txt: '前端组件库优化, 完成了 Card, Button, Modal 三个组件的二次封装, 文档同步更新' },
-      { d: -2, cat: 'inspiration', txt: '想到一个新的日历交互方案, 用滑块切换日期, 配合同步的卡片切换动效' },
+      { d: -2, cat: 'thoughts', txt: '想到一个新的日历交互方案, 用滑块切换日期, 配合同步的卡片切换动效' },
       { d: -2, cat: 'milktea', txt: '茉莉奶绿' },
       { d: -2, cat: 'poop', txt: '💩' },
       { d: -1, cat: 'thoughts', txt: '时间管理最重要的是优先级排序, 其次是专注度, 最后才是效率本身' },
@@ -1651,7 +1646,7 @@ const Storage = {
       { d: 0, cat: 'work', txt: '喝水' },
       { d: 0, cat: 'milktea', txt: '去楼下买了杯珍珠奶茶' },
       { d: 0, cat: 'shower', txt: '下午和同事去看了场电影很开心呀' },
-      { d: 0, cat: 'inspiration', txt: '今天把项目第一阶段的开发任务全部都完成了' },
+      { d: 0, cat: 'work', txt: '今天把项目第一阶段的开发任务全部都完成了' },
       { d: 0, cat: 'thoughts', txt: '这周读完了三本书并且写了两篇读书笔记收获很大准备下周继续坚持' },
       { d: 0, cat: 'housework', txt: '周末计划和家人一起去郊外爬山顺便带些野餐食物再拍一些好看的照片回来整理成相册纪念' },
       { d: 0, cat: 'chore', txt: '早上出门忘记带伞结果下午突然下起大雨只好在便利店躲了一会儿雨顺便买了热饮暖暖身子回家路上买了面包吃着' },
