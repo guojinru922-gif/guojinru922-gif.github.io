@@ -22,6 +22,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="今日记录">
 <meta name="theme-color" content="#FFFFFF">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>今日记录</title>
 <link rel="manifest" href="manifest-mobile.json">
 <link rel="icon" href="icon-180.png" sizes="180x180" type="image/png">
@@ -38,7 +41,7 @@
   --radius:16px; --radius-sm:12px; --radius-lg:22px; --radius-xl:26px;
   --safe-top:env(safe-area-inset-top,0px);
   --safe-bottom:env(safe-area-inset-bottom,0px);
-  --c-work:#7590B0; --c-inspiration:#D89AAD; --c-milktea:#FFFCBF;
+  --c-work:#7590B0; --c-inspiration:#D89AAD; --c-milktea:#FFCDB2;
   --c-thoughts:#9086C8; --c-poop:#B0997F; --c-shower:#6BB8B0;
   --c-housework:#7AAE7A; --c-chore:#D9A05F;
   /* Flat, desaturated accent for UI chrome (buttons, focus, active states) */
@@ -188,7 +191,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-pill-icon{font-size:13px;flex-shrink:0}
 .entry-pill.cat-work{background:#E8F1FA;border-color:var(--c-work);color:var(--c-work)}
 .entry-pill.cat-inspiration{background:#FFF0F3;border-color:var(--c-inspiration);color:var(--c-inspiration)}
-.entry-pill.cat-milktea{background:#FFFCBF;border-color:#EFE08A;color:#9A7B12}
+.entry-pill.cat-milktea{background:#FFCDB2;border-color:#E8A88A;color:#A04A2F}
 .entry-pill.cat-thoughts{background:#EDE8FA;border-color:var(--c-thoughts);color:var(--c-thoughts)}
 .entry-pill.cat-poop{background:#F5EDE0;border-color:var(--c-poop);color:var(--c-poop)}
 .entry-pill.cat-shower{background:#E5FAF9;border-color:var(--c-shower);color:var(--c-shower)}
@@ -367,10 +370,10 @@ input,textarea{font-family:inherit;font-size:16px}
 .cat-work{background:var(--c-work)}.cat-inspiration{background:var(--c-inspiration)}.cat-milktea{background:var(--c-milktea);border:1px solid rgba(0,0,0,.12);box-sizing:border-box}
 .cat-thoughts{background:var(--c-thoughts)}.cat-poop{background:var(--c-poop)}.cat-shower{background:var(--c-shower)}
 .cat-housework{background:var(--c-housework)}.cat-chore{background:var(--c-chore)}
-.cat-work-bg{background:#E8F1FA}.cat-inspiration-bg{background:#FFF0F3}.cat-milktea-bg{background:#FFF6C2}
+.cat-work-bg{background:#E8F1FA}.cat-inspiration-bg{background:#FFF0F3}.cat-milktea-bg{background:#FFE3D4}
 .cat-thoughts-bg{background:#EDE8FA}.cat-poop-bg{background:#F5EDE0}.cat-shower-bg{background:#E5FAF9}
 .cat-housework-bg{background:#E8F5E9}.cat-chore-bg{background:#FFF0E6}
-.cat-work-text{color:var(--c-work)}.cat-inspiration-text{color:var(--c-inspiration)}.cat-milktea-text{color:#9A7B12}
+.cat-work-text{color:var(--c-work)}.cat-inspiration-text{color:var(--c-inspiration)}.cat-milktea-text{color:#A04A2F}
 .cat-thoughts-text{color:var(--c-thoughts)}.cat-poop-text{color:var(--c-poop)}.cat-shower-text{color:var(--c-shower)}
 .cat-housework-text{color:var(--c-housework)}.cat-chore-text{color:var(--c-chore)}
 
@@ -442,9 +445,9 @@ input,textarea{font-family:inherit;font-size:16px}
 .mt-branch-btn{
   padding:4px 11px;border-radius:14px;font-size:11px;font-weight:600;
   border:1.5px solid var(--c-milktea);transition:all .15s;
-  background:var(--surface);color:#9A7B12;cursor:pointer;user-select:none;
+  background:var(--surface);color:#A04A2F;cursor:pointer;user-select:none;
 }
-.mt-branch-btn:active{background:var(--c-milktea);color:#fff}
+.mt-branch-btn:active{background:#A04A2F;color:#fff;border-color:#A04A2F}
 
 .input-row{display:flex;gap:8px;align-items:flex-end}
 .input-area{
@@ -1480,7 +1483,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 const CATEGORIES = [
   { id:'work', name:'工作记录', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
   { id:'inspiration', name:'灵感记录', icon:'💡', color:'#F0A0B8', bgClass:'cat-inspiration-bg', textClass:'cat-inspiration-text', dotClass:'cat-inspiration' },
-  { id:'milktea', name:'奶茶', icon:'🧋', color:'#FFFCBF', textColor:'#9A7B12', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
+  { id:'milktea', name:'奶茶', icon:'🧋', color:'#FFCDB2', textColor:'#A04A2F', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
   { id:'thoughts', name:'今日思考', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
   { id:'poop', name:'💩', icon:'💩', color:'#B8A080', bgClass:'cat-poop-bg', textClass:'cat-poop-text', dotClass:'cat-poop' },
   { id:'shower', name:'洗澡', icon:'🚿', color:'#5CC9C0', bgClass:'cat-shower-bg', textClass:'cat-shower-text', dotClass:'cat-shower' },
@@ -2444,7 +2447,20 @@ const UI = {
     });
 
     html += '</div></div>';
+    // Mobile: horizontally scroll the week so today's column is in view
+    if (UI.isMobile()) requestAnimationFrame(() => UI.scrollWeekViewToToday());
     return html;
+  },
+
+  scrollWeekViewToToday() {
+    const wrap = document.querySelector('.week-view-wrap');
+    if (!wrap) return;
+    const todayCol = wrap.querySelector('.week-col-today') || wrap.querySelector('.week-col');
+    if (!todayCol) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    const colRect = todayCol.getBoundingClientRect();
+    const target = wrap.scrollLeft + (colRect.left - wrapRect.left) - (wrapRect.width / 2) + (colRect.width / 2);
+    wrap.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
   },
 
   renderMonthView() {
@@ -3192,6 +3208,7 @@ const UI = {
     UI.updateDateStripVisibility();
     UI.updateDateStripMonth();
     if (state.view === 'day') UI.scrollDateStripToSelected();
+    if (state.view === 'week') requestAnimationFrame(() => UI.scrollWeekViewToToday());
   },
 
   navPrev() {
