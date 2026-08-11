@@ -262,7 +262,7 @@ input,textarea{font-family:inherit;font-size:16px}
 /* ===== Week View (Apple Calendar Style) ===== */
 .week-view-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:8px;scrollbar-width:none}
 .week-view-wrap::-webkit-scrollbar{display:none}
-.week-view-table{display:flex;min-width:max-content;gap:6px;padding:0 2px}
+.week-view-table{display:flex;min-width:max-content;gap:6px;padding:0 2px;align-items:flex-start}
 .week-col{
   flex:0 0 78px;min-width:78px;display:flex;flex-direction:column;
 }
@@ -304,8 +304,7 @@ input,textarea{font-family:inherit;font-size:16px}
   border:1px solid var(--border-light);
   border-left:3px solid var(--cat-color,#ccc);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
-  display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
-  overflow:hidden;text-overflow:ellipsis;white-space:pre-wrap;
+  white-space:pre-wrap;
 }
 .week-entry:active{transform:scale(.97);opacity:.85}
 .week-empty{font-size:11px;color:var(--text-3);text-align:center;padding:24px 2px}
@@ -1068,8 +1067,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .week-entry{
     margin-bottom:6px;padding:8px 10px;border-radius:8px;
     font-size:13px;line-height:1.5;
-    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;
-    overflow:hidden;text-overflow:ellipsis;white-space:pre-wrap;
+    white-space:pre-wrap;
   }
   .week-col-body{padding:8px 6px}
   .week-col-wd{font-size:12px;margin-bottom:5px}
@@ -2505,7 +2503,7 @@ const UI = {
 
   renderPillRow(entry, date) {
     const cat = CAT_MAP[entry.category] || CAT_MAP.work;
-    const disp = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
+    const disp = entry.content;
     if (entry.recurring) {
       return `
       <div class="pill-row recurring" data-id="${entry.id}" data-date="${date}" style="--cat-color:${cat.color}" onclick="UI.openRecurringOccurrence('${entry.defId}','${date}')">
@@ -2588,11 +2586,11 @@ const UI = {
       } else {
         entries.forEach(entry => {
           const cat = CAT_MAP[entry.category] || CAT_MAP.work;
-          const wtext = UI.isMobile() ? UI.truncate(entry.content, 40) : entry.content;
+          const wtext = entry.content;
           if (entry.recurring) {
             html += `<div class="week-entry recurring" style="--cat-color:${cat.color}" onclick="event.stopPropagation();UI.openRecurringOccurrence('${entry.defId}','${dateStr}')"><span class="rec-badge">🔁</span>${entry.adjusted ? '<span class="rec-badge adj" title="已调整">✏️</span>' : ''}${UI.escapeHtml(wtext)}</div>`;
           } else {
-            html += `<div class="week-entry" style="--cat-color:${cat.color}">${UI.escapeHtml(wtext)}</div>`;
+            html += `<div class="week-entry" style="--cat-color:${cat.color}" onclick="event.stopPropagation();UI.openDayModal('${dateStr}')">${UI.escapeHtml(wtext)}</div>`;
           }
         });
       }
