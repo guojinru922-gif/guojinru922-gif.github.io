@@ -584,12 +584,15 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-detail-overlay.show{opacity:1;pointer-events:auto}
 .entry-detail-modal{
   background:var(--surface);border-radius:var(--radius-xl);
-  width:100%;max-width:440px;max-height:80vh;overflow-y:auto;
+  width:100%;max-width:440px;max-height:90vh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   padding:18px 18px calc(18px + var(--safe-bottom));
   transform:translateY(20px) scale(.96);
   transition:transform var(--anim-slow) var(--curve-modal);
   box-shadow:0 10px 40px rgba(0,0,0,.12);
 }
+.entry-detail-modal::-webkit-scrollbar{width:6px}
+.entry-detail-modal::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .entry-detail-overlay.show .entry-detail-modal{transform:translateY(0) scale(1)}
 .entry-detail-head{
   display:flex;align-items:center;gap:8px;margin-bottom:14px;
@@ -611,7 +614,9 @@ input,textarea{font-family:inherit;font-size:16px}
 .entry-detail-close:active{background:var(--pink-2)}
 .entry-detail-content{
   font-size:15px;line-height:1.7;color:var(--text-1);
-  white-space:pre-wrap;word-break:break-word;outline:none;min-height:40px;
+  white-space:pre-wrap;word-break:break-word;overflow-wrap:break-word;
+  outline:none;min-height:40px;max-width:100%;
+  display:block;
 }
 .entry-detail-content[contenteditable="true"]{
   background:#fff;outline:2px solid var(--accent);
@@ -1129,6 +1134,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
     font-size:13px;line-height:1.5;
     white-space:pre-wrap;
   }
+  /* Wide screens: lay out exactly the 7 columns of the current week evenly
+     across the screen (no horizontal scroll). On mobile this rule does not
+     apply and the 42-day continuous timeline stays in effect. */
+  .week-view-wrap{overflow:visible;padding-bottom:0}
+  .week-view-table{min-width:0;width:100%;justify-content:stretch;gap:8px;padding:0}
+  .week-col{flex:1 1 0;min-width:90px;max-width:none}
   .week-col-body{padding:8px 6px}
   .week-col-wd{font-size:12px;margin-bottom:5px}
   .week-col-num{font-size:18px}
@@ -2613,10 +2624,18 @@ const UI = {
   },
 
   getWeekViewDates() {
-    // Continuous timeline: 2 weeks before + current week + 3 weeks after = 6 weeks
-    // (42 columns). Past, today and future all live in ONE scrollable strip, so
-    // sliding right from today reveals future days instead of hitting a blank edge.
+    // Adaptive by viewport width:
+    //  • Desktop / iPad (>=768px): only the 7 days of the current week, laid out
+    //    evenly across the screen — readable columns, no horizontal scroll.
+    //  • Mobile (<768px): a continuous 6-week (42 day) scrollable strip so the
+    //    user can always slide right from "today" to see future days without
+    //    hitting a blank edge (the v5 of the timeline).
     const weekStart = DateUtil.getWeekDates(state.currentDate)[0];
+    if (!UI.isMobile()) {
+      const arr = [];
+      for (let i = 0; i < 7; i++) arr.push(DateUtil.addDays(weekStart, i));
+      return arr;
+    }
     const start = DateUtil.addDays(weekStart, -14);
     const arr = [];
     for (let i = 0; i < 42; i++) arr.push(DateUtil.addDays(start, i));
