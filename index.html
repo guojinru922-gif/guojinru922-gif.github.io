@@ -644,11 +644,18 @@ input,textarea{font-family:inherit;font-size:16px}
 .modal-overlay.show{opacity:1;pointer-events:auto}
 .modal{
   background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;
-  width:100%;max-width:380px;max-height:85vh;overflow-y:auto;
+  width:100%;max-width:380px;max-height:calc(85vh - var(--kb,0px));overflow-y:auto;
+  /* 手机端键盘弹出时把弹窗抬起，避免「保存/取消」被键盘遮挡 */
+  margin-bottom:var(--kb,0px);
   padding:22px 20px calc(28px + var(--safe-bottom));
-  transform:translateY(100%) scale(.96);transition:transform var(--anim-slow) var(--curve-modal);
+  /* iOS Safari: a `scale()` transform on a scrollable child of a
+     position:fixed overlay breaks tap targets on its children — the
+     buttons become unclickable. Keep only translateY so the sheet
+     still slides up but stays interactive. */
+  transform:translateY(100%);transition:transform var(--anim-slow) var(--curve-modal);
+  -webkit-transform:translateY(100%);
 }
-.modal-overlay.show .modal{transform:translateY(0) scale(1)}
+.modal-overlay.show .modal{transform:translateY(0);-webkit-transform:translateY(0)}
 .modal-handle{width:36px;height:4px;background:var(--pink-3);border-radius:2px;margin:0 auto 18px;opacity:.5}
 .modal-title{font-size:20px;font-weight:800;margin-bottom:20px;color:var(--text-1);letter-spacing:-0.3px}
 
@@ -857,8 +864,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 /* long-press action sheet */
 .sheet-backdrop{position:fixed;inset:0;z-index:118;background:rgba(45,27,46,.18);opacity:0;pointer-events:none;transition:opacity var(--anim-fast) var(--curve-light)}
 .sheet-backdrop.show{opacity:1;pointer-events:auto}
-.action-sheet{position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-direction:column;gap:8px;padding:14px 16px calc(14px + var(--safe-bottom));background:var(--bg);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -6px 24px rgba(0,0,0,.12);transform:translateY(100%) scale(.96);transition:transform var(--anim-slow) var(--curve-modal)}
-.action-sheet.show{transform:translateY(0) scale(1)}
+.action-sheet{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:120;display:flex;flex-direction:column;gap:8px;padding:14px 16px calc(14px + var(--safe-bottom));background:var(--bg);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -6px 24px rgba(0,0,0,.12);transform:translateY(100%);transition:transform var(--anim-slow) var(--curve-modal);-webkit-transform:translateY(100%)}
+.action-sheet.show{transform:translateY(0);-webkit-transform:translateY(0)}
 .action-sheet-name{font-size:13px;font-weight:600;color:var(--text-1);text-align:center;padding-bottom:4px}
 .action-sheet-btn{padding:13px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
 .action-sheet-btn.edit{background:var(--pink-1);color:var(--text-1)}
@@ -3883,9 +3890,9 @@ const SP = {
   CATS: [
     { id: 'fresh', name: '新鲜食材', icon: '🥬', color: '#5BCB5B' },
     { id: 'instant', name: '速食', icon: '🍜', color: '#E89040' },
+    { id: 'drink', name: '饮料', icon: '🥤', color: '#E89AB6' },
     { id: 'snack', name: '零食', icon: '🍪', color: '#CBB56B' },
     { id: 'frozen', name: '冷冻货', icon: '❄️', color: '#6B9BD2' },
-    { id: 'drink', name: '饮料', icon: '🥤', color: '#E89AB6' },
   ],
   items: [],
   editId: null,
@@ -3958,7 +3965,8 @@ const SP = {
     document.getElementById('stockHasExpiry').checked = false;
     this.toggleExpiryField();
     document.getElementById('stockEditModal').classList.add('show');
-    TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
+    // 手机端不自动聚焦，避免键盘弹出遮挡「保存/取消」按钮导致无法操作
+    if (!UI.isMobile()) TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
   },
   toggleExpiryField() {
     const on = document.getElementById('stockHasExpiry').checked;
@@ -4039,7 +4047,8 @@ const SP = {
     this.toggleExpiryField();
     if (it.hasExpiry && it.expiryDate) document.getElementById('stockExpiry').value = it.expiryDate;
     document.getElementById('stockEditModal').classList.add('show');
-    TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
+    // 手机端不自动聚焦，避免键盘弹出遮挡「保存/取消」按钮导致无法操作
+    if (!UI.isMobile()) TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
   }
 };
 
@@ -4971,6 +4980,21 @@ CK.init();
 Sync.pullBlobs(true);
 UI.renderDateStrip();
 UI.scrollDateStripToSelected();
+
+/* 手机端：键盘弹出时把弹窗/操作表抬到键盘上方，避免按钮被遮挡。
+   用 visualViewport 计算键盘高度写入 --kb，CSS 里 modal/action-sheet 取用。 */
+(function setupKeyboardOffset() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const apply = () => {
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    document.documentElement.style.setProperty('--kb', kb > 0 ? kb + 'px' : '0px');
+  };
+  vv.addEventListener('resize', apply);
+  vv.addEventListener('scroll', apply);
+  window.addEventListener('orientationchange', () => setTimeout(apply, 250));
+  apply();
+})();
 </script>
 </body>
 </html>
