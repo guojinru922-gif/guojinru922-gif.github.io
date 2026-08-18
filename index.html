@@ -637,8 +637,7 @@ input,textarea{font-family:inherit;font-size:16px}
 
 /* ===== Settings Modal ===== */
 .modal-overlay{
-  position:fixed;inset:0;z-index:200;background:rgba(45,27,46,.35);
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  position:fixed;inset:0;z-index:200;background:rgba(45,27,46,.45);
   display:flex;align-items:flex-end;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity var(--anim-fast) var(--curve-light);
 }
@@ -850,11 +849,14 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .stock-card.cat-instant{border-color:#E89040;background:#FDF0E3}
 .stock-card.cat-snack{border-color:#CBB56B;background:#F7F1DD}
 .stock-card.cat-frozen{border-color:#6B9BD2;background:#EAF1FB}
+.stock-card.cat-drink{border-color:#E89AB6;background:#FCE7F0}
 /* <=3 days to expiry: force red regardless of category */
 .stock-card.expiring-soon{border-color:#E87870 !important;background:#FDECEC !important}
 .stock-card.expiring-soon .stock-card-meta,
 .stock-card.expiring-soon .stock-card-qty{color:#E87870 !important}
 /* long-press action sheet */
+.sheet-backdrop{position:fixed;inset:0;z-index:118;background:rgba(45,27,46,.18);opacity:0;pointer-events:none;transition:opacity var(--anim-fast) var(--curve-light)}
+.sheet-backdrop.show{opacity:1;pointer-events:auto}
 .action-sheet{position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-direction:column;gap:8px;padding:14px 16px calc(14px + var(--safe-bottom));background:var(--bg);border-top-left-radius:18px;border-top-right-radius:18px;box-shadow:0 -6px 24px rgba(0,0,0,.12);transform:translateY(100%) scale(.96);transition:transform var(--anim-slow) var(--curve-modal)}
 .action-sheet.show{transform:translateY(0) scale(1)}
 .action-sheet-name{font-size:13px;font-weight:600;color:var(--text-1);text-align:center;padding-bottom:4px}
@@ -941,7 +943,6 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-ic-pdd{color:#E87870;font-weight:700;font-size:10px}
 .ck-ic-pdd-a{color:#5BCB5B;font-size:10px}
 .ck-ic-pdd-b{color:#5BCB5B;font-size:10px}
-.ck-ic-tao{font-size:12px}
 .ck-pdd-note{font-size:9.5px;color:var(--text-2);background:#FFF8E5;padding:1px 4px;border-radius:4px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Multi-day 88 purchase: one bar per cell, visually merging into a continuous
@@ -1612,6 +1613,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 </div>
 
 <!-- Stock item long-press action sheet -->
+<div class="sheet-backdrop" id="stockActionBackdrop" onclick="SP.closeAction()"></div>
 <div class="action-sheet" id="stockActionSheet">
   <div class="action-sheet-name" id="stockActionName"></div>
   <button class="action-sheet-btn edit" onclick="SP.actionEdit()">✏️ 修改数据</button>
@@ -2196,8 +2198,7 @@ const Sync = {
       if (!obj || typeof obj !== 'object') return true;
       const t88 = Array.isArray(obj.taobao88) ? obj.taobao88.length : 0;
       const pdd = obj.pdd && typeof obj.pdd === 'object' ? Object.keys(obj.pdd).length : 0;
-      const ts = obj.taobaoSignin && typeof obj.taobaoSignin === 'object' ? Object.keys(obj.taobaoSignin).length : 0;
-      return t88 === 0 && pdd === 0 && ts === 0;
+      return t88 === 0 && pdd === 0;
     }
     return false;
   },
@@ -2258,9 +2259,6 @@ const Sync = {
       }
       if (data.pdd && typeof data.pdd === 'object' && Object.keys(data.pdd).length) {
         CK.data.pdd = Object.assign({}, CK.data.pdd, data.pdd);
-      }
-      if (data.taobaoSignin && typeof data.taobaoSignin === 'object' && Object.keys(data.taobaoSignin).length) {
-        CK.data.taobaoSignin = Object.assign({}, CK.data.taobaoSignin, data.taobaoSignin);
       }
       // TOMBSTONE: permanently honor deletions across devices / cloud pulls.
       // Cloud blob may still contain an item we deleted; filter it out so it
@@ -3887,6 +3885,7 @@ const SP = {
     { id: 'instant', name: '速食', icon: '🍜', color: '#E89040' },
     { id: 'snack', name: '零食', icon: '🍪', color: '#CBB56B' },
     { id: 'frozen', name: '冷冻货', icon: '❄️', color: '#6B9BD2' },
+    { id: 'drink', name: '饮料', icon: '🥤', color: '#E89AB6' },
   ],
   items: [],
   editId: null,
@@ -3943,7 +3942,7 @@ const SP = {
       else { metaText = `${it.expiryDate} 到期`; }
     }
     const cls = `stock-card cat-${c.id}${near ? ' expiring-soon' : ''}`;
-    const lp = `ontouchstart="SP._lpStart(event,'${it.id}')" ontouchend="SP._lpCancel()" ontouchmove="SP._lpCancel()" onmousedown="SP._lpStart(event,'${it.id}')" onmouseup="SP._lpCancel()" onmouseleave="SP._lpCancel()" oncontextmenu="SP.showActions('${it.id}');return false"`;
+    const lp = `ontouchstart="SP._lpStart(event,'${it.id}')" ontouchend="SP._lpCancel()" ontouchmove="SP._lpCancel()" onmousedown="SP._lpStart(event,'${it.id}')" onmouseup="SP._lpCancel()" onmouseleave="SP._lpCancel()" onclick="SP.cardTap('${it.id}')" oncontextmenu="SP.showActions('${it.id}');return false"`;
     return `<div class="${cls}" ${lp}>
       <div class="stock-card-row"><span class="stock-card-name">${this.esc(it.name)}</span><span class="stock-card-qty">×${it.quantity}</span></div>
       ${metaText ? `<div class="stock-card-meta">${metaText}</div>` : ''}
@@ -3959,6 +3958,7 @@ const SP = {
     document.getElementById('stockHasExpiry').checked = false;
     this.toggleExpiryField();
     document.getElementById('stockEditModal').classList.add('show');
+    TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
   },
   toggleExpiryField() {
     const on = document.getElementById('stockHasExpiry').checked;
@@ -3997,19 +3997,33 @@ const SP = {
     });
   },
   _lpId: null,
+  _lpFired: false,
   _lpStart(ev, id) {
     this._lpId = id;
+    this._lpFired = false;
     TimerManager.clearTimeout('sp-lp');
-    TimerManager.timeout('sp-lp', () => { this.showActions(id); }, 450);
+    TimerManager.timeout('sp-lp', () => { this._lpFired = true; this.showActions(id); }, 450);
   },
   _lpCancel() { TimerManager.clearTimeout('sp-lp'); },
+  // Quick tap (no long-press) opens the edit modal directly — avoids the
+  // "tap does nothing" dead-feeling that made mobile entry feel stuck.
+  cardTap(id) {
+    if (this._lpFired) return;   // a long-press already opened the sheet
+    this.openEdit(id);
+  },
   showActions(id) {
     const it = this.items.find(x => x.id === id); if (!it) return;
     this._lpId = id;
     document.getElementById('stockActionName').textContent = it.name;
     document.getElementById('stockActionSheet').classList.add('show');
+    const bd = document.getElementById('stockActionBackdrop');
+    if (bd) bd.classList.add('show');
   },
-  closeAction() { const el = document.getElementById('stockActionSheet'); if (el) el.classList.remove('show'); },
+  closeAction() {
+    const el = document.getElementById('stockActionSheet'); if (el) el.classList.remove('show');
+    const bd = document.getElementById('stockActionBackdrop');
+    if (bd) bd.classList.remove('show');
+  },
   actionEdit() { const id = this._lpId; this.closeAction(); this.openEdit(id); },
   actionDelete() { const id = this._lpId; this.closeAction(); this.confirmDelete(id); },
   openEdit(id) {
@@ -4025,6 +4039,7 @@ const SP = {
     this.toggleExpiryField();
     if (it.hasExpiry && it.expiryDate) document.getElementById('stockExpiry').value = it.expiryDate;
     document.getElementById('stockEditModal').classList.add('show');
+    TimerManager.timeout('sp-focus', () => { const n = document.getElementById('stockName'); if (n) n.focus(); }, 340);
   }
 };
 
@@ -4039,7 +4054,6 @@ const CK = {
   data: {
     taobao88: [],
     pdd: { A: { signIns: {} }, B: { signIns: {} }, notes: {} },
-    taobaoSignin: {},
     tomb: { t88: [], notes: [] }
   },
   init() {
@@ -4082,7 +4096,6 @@ const CK = {
           });
         }
       }
-      if (d.taobaoSignin) this.data.taobaoSignin = d.taobaoSignin;
       if (d.tomb && typeof d.tomb === 'object') {
         this.data.tomb = { t88: Array.isArray(d.tomb.t88) ? d.tomb.t88 : [], notes: Array.isArray(d.tomb.notes) ? d.tomb.notes : [] };
       }
@@ -4120,7 +4133,6 @@ const CK = {
 
   renderIndicators(ymd) {
     const ind = [];
-    if (this.data.taobaoSignin[ymd]) ind.push('<span class="ck-ic ck-ic-tao" title="\u6dd8\u5b9d\u5df2\u7b7e">\ud83c\udf51</span>');
     const a = !!this.data.pdd.A.signIns[ymd];
     const b = !!this.data.pdd.B.signIns[ymd];
     if (a && b) ind.push('<span class="ck-ic ck-ic-pdd" title="\u53cc\u8d26\u53f7\u5df2\u7b7e">\u2713\u2713</span>');
@@ -4456,7 +4468,6 @@ const CK = {
     const label = this.formatDay(ymd);
     const aSigned = !!this.data.pdd.A.signIns[ymd];
     const bSigned = !!this.data.pdd.B.signIns[ymd];
-    const taoSigned = !!this.data.taobaoSignin[ymd];
     const note = this.data.pdd.notes[ymd] || '';
 
     const old = document.getElementById('ckDayOverlay');
@@ -4466,8 +4477,6 @@ const CK = {
     overlay.className = 'ck-day-overlay';
     overlay.innerHTML = '<div class="ck-day-modal">'
       + '<div class="ck-day-modal-title">\ud83d\udcc5 ' + label + '</div>'
-      + '<div class="ck-day-section"><div class="ck-day-section-title">\ud83c\udf51 \u6dd8\u5b9d\u7b7e\u5230</div>'
-      + '<button class="ck-day-toggle ' + (taoSigned ? 'on' : '') + '" data-act="tao">' + (taoSigned ? '\u2705 \u5df2\u7b7e' : '\u2b1c \u672a\u7b7e') + '</button></div>'
       + '<div class="ck-day-section"><div class="ck-day-section-title">\ud83c\udf4a \u62fc\u591a\u591a\u53cc\u8d26\u53f7</div>'
       + '<div class="ck-day-pdd-row">'
       + '<button class="ck-day-toggle ' + (aSigned ? 'on' : '') + '" data-act="pddA">\u8d26\u53f7A ' + (aSigned ? '\u2713' : '\u25cb') + '</button>'
@@ -4486,8 +4495,7 @@ const CK = {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) this.closeDayModal();
       const act = e.target.dataset && e.target.dataset.act;
-      if (act === 'tao') this.toggleTaobaoFromModal(ymd);
-      else if (act === 'pddA') this.togglePddFromModal(ymd, 'A');
+      if (act === 'pddA') this.togglePddFromModal(ymd, 'A');
       else if (act === 'pddB') this.togglePddFromModal(ymd, 'B');
       else if (act === 'saveNote') this.savePddNoteFromModal(ymd);
       else if (act === 'add88') { this.closeDayModal(); this.openItemsInput(ymd, ymd); }
@@ -4520,10 +4528,6 @@ const CK = {
 
   closeDayModal() { const el = document.getElementById('ckDayOverlay'); if (el) el.remove(); },
 
-  toggleTaobaoFromModal(ymd) {
-    if (this.data.taobaoSignin[ymd]) delete this.data.taobaoSignin[ymd]; else this.data.taobaoSignin[ymd] = true;
-    this.save(); this.render(); this.openDayActions(ymd);
-  },
   togglePddFromModal(ymd, acc) {
     const map = this.data.pdd[acc].signIns;
     if (map[ymd]) delete map[ymd]; else map[ymd] = true;
@@ -4615,7 +4619,6 @@ const GH = {
       if (remote.checkin) {
         CK.data.taobao88 = remote.checkin.taobao88 || CK.data.taobao88;
         CK.data.pdd = remote.checkin.pdd || CK.data.pdd;
-        CK.data.taobaoSignin = remote.checkin.taobaoSignin || CK.data.taobaoSignin;
         CK.save();
       }
       SP.render(); CK.render();
