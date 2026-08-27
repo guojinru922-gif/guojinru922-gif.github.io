@@ -2999,6 +2999,7 @@ const UI = {
   },
 
   selectCategory(catId) {
+    const prevCat = state.selectedCategory;
     state.selectedCategory = catId;
     UI.updateAddBarInfo();
     const showerPanel = document.getElementById('showerOptions');
@@ -3019,7 +3020,8 @@ const UI = {
       input.placeholder = '可手输自定义奶茶，或点上方快捷事件';
       input.disabled = false;
       input.style.opacity = '1';
-      input.value = '';
+      // 保留已输入文字（仅从「洗澡」自动生成内容切来时清空）
+      if (prevCat === 'shower') input.value = '';
     } else if (catId === 'poop') {
       hidePanels();
       input.placeholder = '记录此刻...';
@@ -3045,7 +3047,9 @@ const UI = {
       input.placeholder = '记录此刻...';
       input.disabled = false;
       input.style.opacity = '1';
-      input.value = '';
+      // 保留已输入文字：切换分类（如 工作记录↔杂事）前未提交也不丢失；
+      // 仅从「洗澡」自动生成内容切来时清空
+      if (prevCat === 'shower') input.value = '';
     }
     UI.closeTypePicker();
     UI.updateTypePickerActive();
