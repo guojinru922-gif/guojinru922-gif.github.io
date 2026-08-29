@@ -1350,21 +1350,6 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 <!-- Bottom Add Bar (outside scrollable area, truly fixed) -->
 <div class="add-bar" id="addBar">
   <div class="add-bar-info" id="addBarInfo"></div>
-  <div class="shower-options" id="showerOptions">
-    <div class="shower-type-group">
-      <div class="shower-type-btn active" data-type="bath" onclick="UI.setShowerType('bath')">🛀 洗澡</div>
-      <div class="shower-type-btn" data-type="rinse" onclick="UI.setShowerType('rinse')">🚿 冲澡</div>
-      <div class="shower-type-btn" data-type="salon" onclick="UI.setShowerType('salon')">💇 洗吹</div>
-    </div>
-    <div class="shower-divider"></div>
-    <div class="shower-toggle" data-opt="lotion" onclick="UI.toggleShowerOption('lotion')">身体乳</div>
-    <div class="shower-toggle" data-opt="mask" onclick="UI.toggleShowerOption('mask')">面膜</div>
-  </div>
-  <div class="milktea-options" id="milkteaOptions">
-    <div class="milktea-branch-group">
-      <div class="mt-branch-btn" onclick="UI.quickMilktea('咖啡☕️')">☕️ 咖啡</div>
-    </div>
-  </div>
   <div class="input-row">
     <button class="add-type-btn" id="addTypeBtn" type="button" aria-label="展开记录类型选择" title="点击展开类型"><span id="addTypeIcon">💼</span></button>
     <textarea class="input-area" id="entryInput" placeholder="记录此刻..." rows="1" oninput="UI.onInputChange()" onkeydown="UI.onInputKey(event)"></textarea>
@@ -1677,14 +1662,13 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 /* ===== Categories ===== */
 const CATEGORIES = [
   { id:'work', name:'工作记录', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
-  { id:'milktea', name:'奶茶', icon:'🧋', color:'#D89AAD', bgClass:'cat-milktea-bg', textClass:'cat-milktea-text', dotClass:'cat-milktea' },
   { id:'thoughts', name:'今日思考', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
-  { id:'poop', name:'💩', icon:'💩', color:'#B8A080', bgClass:'cat-poop-bg', textClass:'cat-poop-text', dotClass:'cat-poop' },
-  { id:'shower', name:'洗澡', icon:'🚿', color:'#5CC9C0', bgClass:'cat-shower-bg', textClass:'cat-shower-text', dotClass:'cat-shower' },
   { id:'housework', name:'家务', icon:'🧹', color:'#6CB86C', bgClass:'cat-housework-bg', textClass:'cat-housework-text', dotClass:'cat-housework' },
   { id:'chore', name:'杂事', icon:'📋', color:'#F0A050', bgClass:'cat-chore-bg', textClass:'cat-chore-text', dotClass:'cat-chore' },
 ];
 const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+// 已下线的分类（奶茶 / 💩 / 洗澡）：保留其分类定义不再显示，相关历史事件在加载时清除
+const REMOVED_CATS = ['milktea', 'poop', 'shower'];
 
 /* ===== State ===== */
 const STORAGE_KEY = 'daily_tracker_data_v1';
@@ -1801,6 +1785,8 @@ const Storage = {
           if (Array.isArray(data.recurring)) state.recurring = { items: data.recurring, tomb: [] };
           else state.recurring = { items: (data.recurring.items || []), tomb: (data.recurring.tomb || []) };
         }
+        // 清除已下线分类（奶茶/💩/洗澡）的历史数据与引用
+        Storage.filterRemovedCats();
       }
     } catch(e) { console.warn('Load failed:', e); }
 
@@ -1824,6 +1810,34 @@ const Storage = {
     }
   },
 
+  // 清除已下线分类（奶茶/💩/洗澡）的历史数据，并迁移其重复事件
+  filterRemovedCats() {
+    let changed = false;
+    // 1) 删除本地已下线分类的手动记录
+    Object.keys(state.entries).forEach(date => {
+      const before = state.entries[date].length;
+      state.entries[date] = state.entries[date].filter(e => !REMOVED_CATS.includes(e.category));
+      if (state.entries[date].length < before) changed = true;
+      if (state.entries[date].length === 0) delete state.entries[date];
+    });
+    // 2) 引用下线分类的重复事件（如经期默认奶茶）→ 迁移到「今日思考」
+    (state.recurring.items || []).forEach(def => {
+      if (REMOVED_CATS.includes(def.category)) { def.category = 'thoughts'; changed = true; }
+    });
+    // 3) 模板中引用下线分类的整组删除
+    if (Array.isArray(state.templates)) {
+      const before = state.templates.length;
+      state.templates = state.templates.filter(t =>
+        !(t.items || []).some(it => REMOVED_CATS.includes(it.category))
+      );
+      if (state.templates.length < before) changed = true;
+    }
+    // 4) 当前选中分类若已下线，回退到工作记录
+    if (REMOVED_CATS.includes(state.selectedCategory)) { state.selectedCategory = 'work'; changed = true; }
+    if (changed) Storage.save();
+    return changed;
+  },
+
   seedDemoData() {
     const keys = Object.keys(state.entries);
     if (keys.length > 0) return;
@@ -1833,19 +1847,12 @@ const Storage = {
       { d: -5, cat: 'work', txt: 'AI 模型推理优化, 显存占用降低 30%, 推理速度提升 2 倍, 效果超出预期' },
       { d: -4, cat: 'housework', txt: '换季大扫除, 衣柜重新整理了一遍, 淘汰了很多不穿的衣服' },
       { d: -3, cat: 'work', txt: '完成项目需求文档评审' },
-      { d: -3, cat: 'milktea', txt: '午后红茶拿铁' },
-      { d: -3, cat: 'shower', txt: '🛀 洗澡 身体乳' },
       { d: -2, cat: 'work', txt: '前端组件库优化, 完成了 Card, Button, Modal 三个组件的二次封装, 文档同步更新' },
       { d: -2, cat: 'thoughts', txt: '想到一个新的日历交互方案, 用滑块切换日期, 配合同步的卡片切换动效' },
-      { d: -2, cat: 'milktea', txt: '茉莉奶绿' },
-      { d: -2, cat: 'poop', txt: '💩' },
       { d: -1, cat: 'thoughts', txt: '时间管理最重要的是优先级排序, 其次是专注度, 最后才是效率本身' },
       { d: -1, cat: 'housework', txt: '整理书桌' },
-      { d: -1, cat: 'shower', txt: '🚿 冲澡 面膜' },
       { d: -1, cat: 'chore', txt: '还信用卡' },
       { d: 0, cat: 'work', txt: '喝水' },
-      { d: 0, cat: 'milktea', txt: '去楼下买了杯珍珠奶茶' },
-      { d: 0, cat: 'shower', txt: '下午和同事去看了场电影很开心呀' },
       { d: 0, cat: 'work', txt: '今天把项目第一阶段的开发任务全部都完成了' },
       { d: 0, cat: 'thoughts', txt: '这周读完了三本书并且写了两篇读书笔记收获很大准备下周继续坚持' },
       { d: 0, cat: 'housework', txt: '周末计划和家人一起去郊外爬山顺便带些野餐食物再拍一些好看的照片回来整理成相册纪念' },
@@ -1869,9 +1876,6 @@ const Storage = {
   seedTemplates() {
     if (state.templates && state.templates.length > 0) return;
     state.templates = [
-      { id:'tpl_1', name:'洗澡全套', icon:'🛀', items:[{category:'shower',content:'🛀 洗澡 身体乳 面膜'}] },
-      { id:'tpl_2', name:'排', icon:'💩', items:[{category:'poop',content:'💩'}] },
-      { id:'tpl_3', name:'喝奶茶', icon:'🧋', items:[{category:'milktea',content:'🧋 奶茶'}] },
       { id:'tpl_4', name:'日常家务', icon:'🧹', items:[{category:'housework',content:'日常打扫'}] },
     ];
     Storage.save();
@@ -1933,7 +1937,7 @@ const Sync = {
         );
         Sync.setStatus('connected');
         UI.showLoading('首次同步中…');
-        Sync.fullSync().finally(() => UI.hideLoading());
+        Sync.fullSync().finally(() => { UI.hideLoading(); Sync.purgeRemovedCats(); });
         Sync.pullBlobs(true, true); // 立即拉取签到/囤货数据，避免刷新后短暂空白
         // Auto sync every 20s for near real-time multi-device sync
         TimerManager.interval('sync', () => { Sync.pull(); Sync.pullBlobs(true); }, 20000);
@@ -1956,7 +1960,7 @@ const Sync = {
       Storage.saveConfig();
       Sync.setStatus('connected');
       UI.showToast('✅ 正在同步数据...');
-      Sync.fullSync();
+      Sync.fullSync().then(() => Sync.purgeRemovedCats());
       Sync.pullBlobs(true, true); // 手动连接时也立即拉取签到/囤货数据，避免遗漏
       TimerManager.clearInterval('sync');
       TimerManager.interval('sync', () => { Sync.pull(); Sync.pullBlobs(true); }, 20000);
@@ -2044,6 +2048,7 @@ const Sync = {
       // Phase 3: Add cloud entries not in local (from other devices)
       Object.values(cloudMap).forEach(row => {
         if (String(row.id || '').startsWith('demo_')) return; // skip legacy demo entries
+        if (REMOVED_CATS.includes(row.category)) return; // 已下线分类不再同步回来
         if (!localIds.has(row.id)) {
           if (!state.entries[row.date]) state.entries[row.date] = [];
           state.entries[row.date].push({
@@ -2139,6 +2144,7 @@ const Sync = {
       // Add new cloud entries
       Object.values(cloudMap).forEach(row => {
         if (String(row.id || '').startsWith('demo_')) return; // skip legacy demo entries
+        if (REMOVED_CATS.includes(row.category)) return; // 已下线分类不再同步回来
         if (!localIds.has(row.id)) {
           if (!state.entries[row.date]) state.entries[row.date] = [];
           state.entries[row.date].push({
@@ -2192,6 +2198,22 @@ const Sync = {
         .update({ deleted: true, updated_at: Date.now() })
         .eq('id', entryId);
     } catch(e) { console.warn('Delete sync failed:', e); }
+  },
+
+  // 软删云端已下线分类（奶茶/💩/洗澡）的历史记录，并清理本地
+  async purgeRemovedCats() {
+    if (!supabaseClient) return;
+    try {
+      const { data } = await supabaseClient.from('daily_entries')
+        .select('id, category').in('category', REMOVED_CATS);
+      if (data && data.length) {
+        await supabaseClient.from('daily_entries')
+          .update({ deleted: true, updated_at: Date.now() })
+          .in('id', data.map(r => r.id));
+      }
+    } catch(e) { console.warn('purgeRemovedCats failed:', e); }
+    Storage.filterRemovedCats();
+    UI.render();
   },
 
   /* ===== Stockpile / Checkin blob sync (unified into Supabase) ===== */
@@ -2999,75 +3021,17 @@ const UI = {
   },
 
   selectCategory(catId) {
-    const prevCat = state.selectedCategory;
     state.selectedCategory = catId;
     UI.updateAddBarInfo();
-    const showerPanel = document.getElementById('showerOptions');
-    const mtPanel = document.getElementById('milkteaOptions');
-    const hidePanels = () => { showerPanel.classList.remove('show'); mtPanel.classList.remove('show'); };
     const input = document.getElementById('entryInput');
-    if (catId === 'shower') {
-      hidePanels();
-      showerPanel.classList.add('show');
-      input.placeholder = '选择洗澡选项后自动生成';
-      input.disabled = true;
-      input.style.opacity = '0.5';
-      UI.generateShowerContent();
-    } else if (catId === 'milktea') {
-      // 奶茶：显示分支快捷事件面板；输入框保持可用，可手输自定义奶茶事件
-      hidePanels();
-      mtPanel.classList.add('show');
-      input.placeholder = '可手输自定义奶茶，或点上方快捷事件';
-      input.disabled = false;
-      input.style.opacity = '1';
-      // 保留已输入文字（仅从「洗澡」自动生成内容切来时清空）
-      if (prevCat === 'shower') input.value = '';
-    } else if (catId === 'poop') {
-      hidePanels();
-      input.placeholder = '记录此刻...';
-      input.disabled = false;
-      input.style.opacity = '1';
-      input.value = '';
-      // Auto-add 💩 immediately
-      const entry = Entries.add('poop', '💩');
-      UI.render();
-      requestAnimationFrame(() => {
-        const row = document.querySelector(`.pill-row[data-id="${entry.id}"]`);
-        if (row) { row.scrollIntoView({ behavior:'smooth', block:'center' }); row.classList.add('flash-new'); }
-      });
-      const sendBtn = document.getElementById('sendBtn');
-      if (sendBtn) { sendBtn.classList.add('pop'); setTimeout(() => sendBtn.classList.remove('pop'), 400); }
-      UI.showToast('💩 已记录');
-      // Reset to default category
-      state.selectedCategory = 'work';
-      UI.updateAddBarInfo();
-      return;
-    } else {
-      hidePanels();
-      input.placeholder = '记录此刻...';
-      input.disabled = false;
-      input.style.opacity = '1';
-      // 保留已输入文字：切换分类（如 工作记录↔杂事）前未提交也不丢失；
-      // 仅从「洗澡」自动生成内容切来时清空
-      if (prevCat === 'shower') input.value = '';
-    }
+    input.placeholder = '记录此刻...';
+    input.disabled = false;
+    input.style.opacity = '1';
+    // 保留已输入文字：切换分类（如 工作记录↔杂事）前未提交也不丢失
     UI.closeTypePicker();
     UI.updateTypePickerActive();
     UI.updateTypeBtn();
     UI.updateSendBtn();
-  },
-
-  // 奶茶分支快捷事件：点一下即记一条到奶茶大分类
-  quickMilktea(content) {
-    const entry = Entries.add('milktea', content);
-    UI.render();
-    requestAnimationFrame(() => {
-      const row = document.querySelector(`.pill-row[data-id="${entry.id}"]`);
-      if (row) { row.scrollIntoView({ behavior:'smooth', block:'center' }); row.classList.add('flash-new'); }
-    });
-    const sendBtn = document.getElementById('sendBtn');
-    if (sendBtn) { sendBtn.classList.add('pop'); setTimeout(() => sendBtn.classList.remove('pop'), 400); }
-    UI.showToast('🧋 ' + content + ' 已记录');
   },
 
   updateTypeBtn() {
@@ -3084,9 +3048,8 @@ const UI = {
     const picker = document.getElementById('typePicker');
     if (!picker) return;
     picker.innerHTML = CATEGORIES.map(c => {
-      const quick = (c.id === 'poop') ? ' quick' : '';
       const label = c.name.replace('记录', '');
-      return `<div class="type-picker-item${quick}" data-cat="${c.id}" onclick="UI.pickCategory('${c.id}')">`
+      return `<div class="type-picker-item" data-cat="${c.id}" onclick="UI.pickCategory('${c.id}')">`
         + `<span class="pi-ic">${c.icon}</span><span class="pi-nm">${label}</span></div>`;
     }).join('');
   },
@@ -3110,18 +3073,15 @@ const UI = {
   },
   pickCategory(id) {
     this.closeTypePicker();
-    if (id === 'poop') UI.selectCategory(id);
-    else this.selectCategory(id);
+    this.selectCategory(id);
   },
   _attachAddTypeBtn() {
     const btn = document.getElementById('addTypeBtn');
     if (!btn || btn._attached) return;
     btn._attached = true;
     this.renderTypePicker();
-    // Tap = expand the type picker (no more tap-to-cycle)
+    // Tap = expand the type picker
     btn.addEventListener('click', () => UI.toggleTypePicker());
-    // Desktop convenience: right-click = 💩 quick-add
-    btn.addEventListener('contextmenu', (e) => { e.preventDefault(); UI.closeTypePicker(); UI.selectCategory('poop'); });
     // Close the picker when tapping anywhere outside it / the button
     if (!document._pickerOutside) {
       document._pickerOutside = true;
@@ -3133,33 +3093,6 @@ const UI = {
       }, true);
     }
     UI.updateTypeBtn();
-  },
-
-  setShowerType(type) {
-    state.showerType = type;
-    document.querySelectorAll('.shower-type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
-    UI.generateShowerContent();
-  },
-
-  toggleShowerOption(opt) {
-    if (opt === 'lotion') state.showerLotion = !state.showerLotion;
-    if (opt === 'mask') state.showerMask = !state.showerMask;
-    document.querySelectorAll('.shower-toggle').forEach(t => {
-      if (opt === t.dataset.opt) t.classList.toggle('on', opt === 'lotion' ? state.showerLotion : state.showerMask);
-    });
-    UI.generateShowerContent();
-  },
-
-  generateShowerContent() {
-    const input = document.getElementById('entryInput');
-    let content = '';
-    if (state.showerType === 'bath') content = '🛀 洗澡';
-    else if (state.showerType === 'rinse') content = '🚿 冲澡';
-    else if (state.showerType === 'salon') content = '💇 洗吹';
-    if (state.showerLotion) content += ' 身体乳';
-    if (state.showerMask) content += ' 面膜';
-    input.value = content;
-    UI.updateSendBtn();
   },
 
   // ===== Day Detail Modal =====
@@ -3765,7 +3698,7 @@ const TabController = {
     let startX = 0, startY = 0, decided = false, isHoriz = false, dragX = 0, active = false;
     const begin = (x, y, target) => {
       if (TabController.onHome || this._animating) return;
-      if (target && target.closest && target.closest('.filter-bar,.add-bar-info,.date-strip-wrapper,.stock-grid,.shower-options,.week-view-wrap')) return;
+      if (target && target.closest && target.closest('.filter-bar,.add-bar-info,.date-strip-wrapper,.stock-grid,.week-view-wrap')) return;
       active = true; decided = false; isHoriz = false; dragX = 0;
       startX = x; startY = y;
     };
@@ -3806,7 +3739,7 @@ const TabController = {
     tp.addEventListener('wheel', (e) => {
       if (TabController.onHome) return;
       if (e.target && e.target.closest &&
-          e.target.closest('.date-strip-wrapper,.add-bar-info,.stock-grid,.shower-options')) return;
+          e.target.closest('.date-strip-wrapper,.add-bar-info,.stock-grid')) return;
       const horiz = Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 24;
       if (!horiz) return;
       if (wheelLock) return;
@@ -4792,7 +4725,7 @@ UI.mergedForDate = function(date) {
 UI._recEditingId = null;
 UI._recPresets = {
   birthday: { icon:'🎂', title:'生日', category:'thoughts', rule:{type:'yearly'} },
-  period:   { icon:'🩸', title:'经期', category:'milktea', rule:{type:'interval', every:30, anchor: DateUtil.format(new Date())} },
+  period:   { icon:'🩸', title:'经期', category:'thoughts', rule:{type:'interval', every:30, anchor: DateUtil.format(new Date())} },
   anniv:    { icon:'💍', title:'纪念日', category:'thoughts', rule:{type:'yearly'} },
   weekly:   { icon:'', title:'', category:'work', rule:{type:'weekly', days:[]} },
   monthly:  { icon:'', title:'', category:'work', rule:{type:'monthly', dom:1} },
@@ -4825,7 +4758,7 @@ UI.renderRecurringList = function() {
       <div class="rec-item-dot" style="background:${cat.color}"></div>
       <div class="rec-item-main">
         <div class="rec-item-title">${(def.icon ? def.icon + ' ' : '') + UI.escapeHtml(def.title)}</div>
-        <div class="rec-item-rule">${UI.escapeHtml(Recurring.ruleText(def))}${Recurring.exceptionCount(def) ? ' · <span style="color:var(--c-milktea);font-weight:600">'+Recurring.exceptionCount(def)+' 次已调整</span>' : ''}</div>
+        <div class="rec-item-rule">${UI.escapeHtml(Recurring.ruleText(def))}${Recurring.exceptionCount(def) ? ' · <span style="color:var(--c-thoughts);font-weight:600">'+Recurring.exceptionCount(def)+' 次已调整</span>' : ''}</div>
       </div>
       <div class="rec-item-actions">
         <button class="rec-item-btn" onclick="UI.openRecurringEditor('${def.id}')">编辑</button>
