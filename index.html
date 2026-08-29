@@ -1170,14 +1170,20 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .add-type-btn{display:none}
 }
 @media (min-width: 1024px) {
-  /* 大屏电脑：把内容区间上限从 1000px 抬到 1320px（仍用 vw 自适应，窄屏自动收紧） */
-  #app{max-width:min(96vw, 1320px)}
-  .stock-container{max-width:min(96vw, 1320px)}
-  .ck-wrap{max-width:min(96vw, 1320px)}
-  .add-bar{max-width:min(96vw, 1320px)}
-  .home-cards{max-width:880px}
+  /* 大屏电脑：内容区间进一步贴边（98vw），上限抬到 1500px，.main 横向内边距收紧 */
+  #app{max-width:min(98vw, 1500px)}
+  .stock-container{max-width:min(98vw, 1500px)}
+  .ck-wrap{max-width:min(98vw, 1500px)}
+  .add-bar{max-width:min(98vw, 1500px)}
+  .home-cards{max-width:1000px}
   .home-card{padding:26px 24px}
   .pill-list{grid-template-columns:repeat(3,1fr)}
+  /* 内容区左右内边距收紧，让月历网格尽量顶满 */
+  .main{padding-left:8px;padding-right:8px}
+  /* 月历单元格：宽高比 1.45:1（横向拉宽、纵向压扁），6 行月历一屏可看 */
+  .month-day{aspect-ratio:1.45}
+  .month-weekday{padding:6px 0;font-size:12px}
+  .month-day-pill{font-size:11px;line-height:1.35;padding:2px 6px}
 }
 @media (orientation: landscape) and (max-height: 640px) {
   .home-screen{flex-direction:row;flex-wrap:wrap;align-content:center;gap:14px;padding:20px 30px}
