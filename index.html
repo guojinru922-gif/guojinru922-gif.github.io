@@ -1171,11 +1171,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .add-type-btn{display:none}
 }
 @media (min-width: 1024px) {
-  #app{max-width:1000px}
-  .stock-container{max-width:1000px}
-  .ck-wrap{max-width:1000px}
-  .add-bar{max-width:1000px}
-  .home-cards{max-width:680px}
+  /* 大屏电脑：把内容区间上限从 1000px 抬到 1320px（仍用 vw 自适应，窄屏自动收紧） */
+  #app{max-width:min(96vw, 1320px)}
+  .stock-container{max-width:min(96vw, 1320px)}
+  .ck-wrap{max-width:min(96vw, 1320px)}
+  .add-bar{max-width:min(96vw, 1320px)}
+  .home-cards{max-width:880px}
   .home-card{padding:26px 24px}
   .pill-list{grid-template-columns:repeat(3,1fr)}
 }
