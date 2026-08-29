@@ -1016,7 +1016,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   position:fixed;inset:0;z-index:260;background:rgba(45,27,46,.4);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:flex;align-items:flex-end;justify-content:center;
-  animation:ckFade .25s ease;
+  /* 关掉淡入动画（避免点签到按钮时整个弹窗"闪一下"） */
 }
 @keyframes ckFade{from{opacity:0}to{opacity:1}}
 .ck-day-modal{
@@ -1075,7 +1075,6 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   position:fixed;inset:0;z-index:280;background:rgba(45,27,46,.4);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   display:flex;align-items:center;justify-content:center;padding:16px;
-  animation:ckFade .25s ease;
 }
 .ck-input-modal{
   background:var(--surface);border-radius:18px;
@@ -4424,6 +4423,12 @@ const CK = {
     overlay.className = 'ck-day-overlay';
     overlay.innerHTML = '<div class="ck-day-modal">'
       + '<div class="ck-day-modal-title">\ud83d\udcc5 ' + label + '</div>'
+      + '<div class="ck-day-section"><div class="ck-day-section-title">\ud83d\uded2 88\u8d2d\u4e70</div>'
+      + '<div id="ckDay88List"></div>'
+      + '<div class="ck-day-88-actions">'
+      + '<button class="ck-day-add88" data-act="add88">+ \u4ec5\u5f53\u65e5</button>'
+      + '<button class="ck-day-add88-multi" data-act="add88multi">\u270f\ufe0f \u8de8\u65e5\uff081-3\u5929\uff09</button>'
+      + '</div></div>'
       + '<div class="ck-day-section"><div class="ck-day-section-title">\ud83c\udf4a \u62fc\u591a\u591a\u53cc\u8d26\u53f7</div>'
       + '<div class="ck-day-pdd-row">'
       + '<button class="ck-day-toggle ' + (aSigned ? 'on' : '') + '" data-act="pddA">\u8d26\u53f7A ' + (aSigned ? '\u2713' : '\u25cb') + '</button>'
@@ -4431,12 +4436,6 @@ const CK = {
       + '</div>'
       + '<input id="ckPddNoteInput" class="ck-day-input" placeholder="\u4e70\u4e86\u4ec0\u4e48\uff08\u53ef\u9009\uff09" value="' + this.esc(note) + '">'
       + '<button class="ck-day-mini-save" data-act="saveNote">\u4fdd\u5b58\u5907\u6ce8</button></div>'
-      + '<div class="ck-day-section"><div class="ck-day-section-title">\ud83d\uded2 88\u8d2d\u4e70</div>'
-      + '<div id="ckDay88List"></div>'
-      + '<div class="ck-day-88-actions">'
-      + '<button class="ck-day-add88" data-act="add88">+ \u4ec5\u5f53\u65e5</button>'
-      + '<button class="ck-day-add88-multi" data-act="add88multi">\u270f\ufe0f \u8de8\u65e5\uff081-3\u5929\uff09</button>'
-      + '</div></div>'
       + '<button class="ck-day-close" data-act="close">\u5173\u95ed</button>'
       + '</div>';
     overlay.addEventListener('click', (e) => {
@@ -4478,7 +4477,14 @@ const CK = {
   togglePddFromModal(ymd, acc) {
     const map = this.data.pdd[acc].signIns;
     if (map[ymd]) delete map[ymd]; else map[ymd] = true;
-    this.save(); this.render(); this.openDayActions(ymd);
+    this.save(); this.render();
+    // 原地刷新拼多多按钮（不重建弹窗，避免闪屏动画）
+    const btn = document.querySelector('#ckDayOverlay [data-act="pdd' + acc + '"]');
+    if (btn) {
+      const signed = !!this.data.pdd[acc].signIns[ymd];
+      btn.classList.toggle('on', signed);
+      btn.textContent = (acc === 'A' ? '\u8d26\u53f7A ' : '\u8d26\u53f7B ') + (signed ? '\u2713' : '\u25cb');
+    }
   },
   savePddNoteFromModal(ymd) {
     const inp = document.getElementById('ckPddNoteInput');
@@ -4488,7 +4494,6 @@ const CK = {
     else { delete this.data.pdd.notes[ymd]; if (!this.data.tomb.notes.includes(ymd)) this.data.tomb.notes.push(ymd); }
     this.save(); this.render();
     UI.showToast('\u5df2\u4fdd\u5b58');
-    this.openDayActions(ymd);
   }
 };
 /* ===== GitHub Gist Sync (stockpile + checkin only) ===== */
