@@ -162,7 +162,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .date-strip-header-left{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .filter-bar-inline{flex:1;display:flex;gap:6px;align-items:center;justify-content:flex-end;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0}
 .filter-bar-inline::-webkit-scrollbar{display:none}
-.filter-bar-inline:empty{display:none}
+/* 日视图：通过 body data-view 隐藏整条（不依赖 JS 注入） */
+body[data-view="day"] .filter-bar-inline{display:none}
 .date-strip-nav-arrow{
   width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:15px;color:var(--text-3);transition:all .15s;line-height:1;
@@ -369,6 +370,12 @@ input,textarea{font-family:inherit;font-size:16px}
 .filter-chip .chip-emoji{font-size:13px;flex-shrink:0}
 /* 头部内联筛选条：周/月视图用，比主内容里更紧凑 */
 .filter-bar-inline .filter-chip{padding:4px 10px;font-size:10.5px;gap:3px}
+/* 各分类 chip 配色（直接用分类色 60% 降饱和，色条风格与事件卡一致） */
+.filter-bar-inline .filter-chip[data-cat=""]{background:var(--pink-1);color:var(--text-2)}
+.filter-bar-inline .filter-chip[data-cat="work"]{background:color-mix(in srgb, var(--c-work) 14%, #fff);color:var(--c-work)}
+.filter-bar-inline .filter-chip[data-cat="thoughts"]{background:color-mix(in srgb, var(--c-thoughts) 14%, #fff);color:var(--c-thoughts)}
+.filter-bar-inline .filter-chip[data-cat="housework"]{background:color-mix(in srgb, var(--c-housework) 14%, #fff);color:var(--c-housework)}
+.filter-bar-inline .filter-chip[data-cat="chore"]{background:color-mix(in srgb, var(--c-chore) 14%, #fff);color:var(--c-chore)}
 
 /* ===== Month View ===== */
 .month-section{margin-bottom:20px}
@@ -1357,7 +1364,13 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
         <div class="date-strip-nav-arrow" onclick="UI.navNext()" title="下个月/下一周">〉</div>
         <button class="date-strip-today-btn" onclick="UI.goToToday()">今天</button>
       </div>
-      <div class="filter-bar-inline" id="filterBarInline"></div>
+      <div class="filter-bar-inline" id="filterBarInline">
+        <div class="filter-chip" data-cat="" onclick="UI.toggleFilter(null)">全部</div>
+        <div class="filter-chip" data-cat="work" onclick="UI.toggleFilter('work')"><span class="chip-emoji">💼</span> 工作记录</div>
+        <div class="filter-chip" data-cat="thoughts" onclick="UI.toggleFilter('thoughts')"><span class="chip-emoji">💭</span> 今日思考</div>
+        <div class="filter-chip" data-cat="housework" onclick="UI.toggleFilter('housework')"><span class="chip-emoji">🧹</span> 家务</div>
+        <div class="filter-chip" data-cat="chore" onclick="UI.toggleFilter('chore')"><span class="chip-emoji">📋</span> 杂事</div>
+      </div>
     </div>
     <div class="date-strip-wrapper" id="dateStripWrapper">
       <div class="date-strip" id="dateStrip"></div>
@@ -3062,20 +3075,17 @@ const UI = {
   },
 
   /**
-   * 周/月视图：把筛选条注入 header 内的 #filterBarInline 容器（与月份导航同一行）
-   * 日视图：清空容器
+   * 周/月视图：同步筛选条 chip 的 active 态（chip 是静态 HTML，不用动态注入）
+   * 日视图：CSS 通过 body[data-view="day"] 自动隐藏整条
    */
   renderInlineFilterBar() {
     const el = document.getElementById('filterBarInline');
     if (!el) return;
-    if (state.view === 'day') { el.innerHTML = ''; return; }
     const filterCat = state.filterCategory;
-    let html = '';
-    html += `<div class="filter-chip ${!filterCat ? 'active' : ''}" style="background:var(--pink-1);color:var(--text-2)" onclick="UI.toggleFilter(null)">全部</div>`;
-    CATEGORIES.forEach(cat => {
-      html += `<div class="filter-chip ${filterCat === cat.id ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.textColor || cat.color}" onclick="UI.toggleFilter('${cat.id}')"><span class="chip-emoji">${cat.icon}</span>${cat.name && cat.name !== cat.icon ? ' ' + cat.name : ''}</div>`;
+    el.querySelectorAll('.filter-chip').forEach(chip => {
+      const cat = chip.getAttribute('data-cat') || '';
+      chip.classList.toggle('active', cat === (filterCat || ''));
     });
-    el.innerHTML = html;
   },
 
   updateAddBarInfo() {
