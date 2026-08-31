@@ -307,8 +307,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .week-col:last-child{border-right:none}
 /* Monday = start of a new week: a slightly stronger divider so the continuous
    strip still reads as weeks (past → today → future all in one flow). */
-.week-col-ws{border-left:2px solid var(--border)}
-.week-col-sat,.week-col-sun{background:#FAFAFB}
+.week-col-ws{border-left:1px solid #F2F2F2}
+.week-col-sat,.week-col-sun{background:transparent}
 .week-col-header{
   text-align:center;padding:10px 3px 8px;
   border-bottom:1px solid var(--border-light);
@@ -448,6 +448,8 @@ input,textarea{font-family:inherit;font-size:16px}
   box-shadow:0 -2px 12px rgba(45,27,46,.06);
 }
 .add-bar.hidden{display:none !important}
+/* 兜底：body 上有 data-view="month" 时强制隐藏 add-bar（不依赖 JS 给 addBar 加 hidden 类） */
+body[data-view="month"] .add-bar{display:none !important}
 .add-bar-info{
   display:none;
 }
@@ -2486,6 +2488,7 @@ const UI = {
     state.view = view;
     state.filterCategory = null;
     if (view === 'month') state.monthSelectedDate = null;
+    document.body.setAttribute('data-view', view);
     document.querySelectorAll('.view-tab').forEach(tab => {
       tab.classList.toggle('active', tab.dataset.view === view);
     });
