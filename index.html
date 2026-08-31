@@ -34,7 +34,7 @@
 /* ===== Reset & Base ===== */
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#FAFAF7; --surface:#FFFFFF;
+  --bg:#FFFFFF; --surface:#FFFFFF;
   --text-1:#2D2D2D; --text-2:#6B6B6B; --text-3:#B0B0B0;
   --border:#EEEEEE; --border-light:#F5F5F3;
   --shadow:0 1px 3px rgba(0,0,0,.04); --shadow-md:0 4px 16px rgba(0,0,0,.06);
@@ -268,7 +268,7 @@ input,textarea{font-family:inherit;font-size:16px}
   border-radius:var(--radius-sm);
   padding:11px 14px 11px 12px;
   border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 14%, transparent);
-  border-left:4px solid var(--cat-color,#ccc);
+  border-left:4px solid color-mix(in srgb, var(--cat-color,#ccc) 60%, #fff);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   transition:all .18s var(--curve-light);
   cursor:pointer;position:relative;
@@ -317,7 +317,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .week-col-body{padding:6px 3px;min-height:180px}
 /* Today highlight */
 .week-col-today .week-col-header{
-  background:linear-gradient(135deg,#F0F5FB,#FAFAF7);
+  background:linear-gradient(135deg,#F0F5FB,#FFFFFF);
   border-bottom-color:var(--c-work);
 }
 .week-col-wd{font-size:11px;color:var(--text-3);margin-bottom:4px;font-weight:600}
@@ -340,7 +340,7 @@ input,textarea{font-family:inherit;font-size:16px}
   overflow-wrap:break-word;word-break:normal;cursor:pointer;transition:transform .15s;
   background:color-mix(in srgb, var(--cat-color,#ccc) 9%, #fff);
   border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 18%, transparent);
-  border-left:3px solid var(--cat-color,#ccc);
+  border-left:3px solid color-mix(in srgb, var(--cat-color,#ccc) 60%, #fff);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
   overflow:hidden;text-overflow:ellipsis;white-space:pre-wrap;
@@ -399,7 +399,7 @@ input,textarea{font-family:inherit;font-size:16px}
   padding:1px 5px;border-radius:3px;color:var(--text-1);
   background:color-mix(in srgb, var(--cat-color,#ccc) 11%, #fff);
   border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 20%, transparent);
-  border-left:2px solid var(--cat-color,#ccc);
+  border-left:2px solid color-mix(in srgb, var(--cat-color,#ccc) 60%, #fff);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
   overflow:hidden;word-break:break-word;white-space:normal;
 }
@@ -1217,11 +1217,14 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .pill-list{grid-template-columns:repeat(3,1fr)}
   /* 内容区左右内边距收紧，让月历网格尽量顶满 */
   .main{padding-left:8px;padding-right:8px}
-  /* 月历单元格：宽高比 1.95:1（更扁），6 行月历一屏可看；月历头部/标题更紧凑 */
-  .month-day{aspect-ratio:1.95}
+  /* 月历单元格：宽高比 2.4:1（更扁），6 行月历一屏可看；月历头部/标题更紧凑 */
+  .month-day{aspect-ratio:2.4}
   .month-weekday{padding:4px 0;font-size:12px}
-  .month-header-bar{margin-bottom:8px}
+  .month-header-bar{margin-bottom:6px}
+  .month-title-big{font-size:18px}
+  .month-section{margin-bottom:12px}
   .month-day-pill{font-size:10px;line-height:1.3;padding:1px 5px}
+  .month-grid{gap:3px}
 }
 @media (orientation: landscape) and (max-height: 640px) {
   .home-screen{flex-direction:row;flex-wrap:wrap;align-content:center;gap:14px;padding:20px 30px}
