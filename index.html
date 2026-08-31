@@ -227,11 +227,47 @@ input,textarea{font-family:inherit;font-size:16px}
 
 .pill-list{display:flex;gap:8px;align-items:flex-start}
 .pill-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+/* ===== Event Card Visual: v2 (left color bar + lighter fill) =====
+   2026-08-31 更新：把 .pill-row / .week-entry / .month-day-pill 改成"左侧色条 + 浅色整张填充"。
+   用 color-mix 从 --cat-color 派生浅色，无需为每个分类手写浅色。
+
+   旧版（白底 + 左侧色条，回退时启用下面这块、注释掉新版）：
+   .pill-row{
+     display:flex;align-items:flex-start;gap:10px;
+     background:var(--surface);border-radius:var(--radius-sm);
+     padding:11px 14px 11px 12px;
+     border:1px solid var(--border-light);
+     border-left:4px solid var(--cat-color,#ccc);
+     box-shadow:0 1px 3px rgba(0,0,0,.025);
+     transition:all .18s var(--curve-light);
+     cursor:pointer;position:relative;
+   }
+   .week-entry{
+     margin-bottom:6px;padding:6px 7px;border-radius:7px;
+     font-size:12px;font-weight:500;color:var(--text-1);line-height:1.5;
+     overflow-wrap:break-word;word-break:normal;cursor:pointer;transition:transform .15s;
+     background:#fff;
+     border:1px solid var(--border-light);
+     border-left:3px solid var(--cat-color,#ccc);
+     box-shadow:0 1px 3px rgba(0,0,0,.025);
+     display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
+     overflow:hidden;text-overflow:ellipsis;white-space:pre-wrap;
+   }
+   .month-day-pill{
+     font-size:10px;font-weight:500;line-height:1.3;
+     padding:1px 5px;border-radius:3px;color:var(--text-1);
+     background:#fff;
+     border:1px solid var(--border-light);
+     border-left:2px solid var(--cat-color,#ccc);
+     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+   }
+================================================================= */
 .pill-row{
   display:flex;align-items:flex-start;gap:10px;
-  background:var(--surface);border-radius:var(--radius-sm);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 14%, #fff);
+  border-radius:var(--radius-sm);
   padding:11px 14px 11px 12px;
-  border:1px solid var(--border-light);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 25%, transparent);
   border-left:4px solid var(--cat-color,#ccc);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   transition:all .18s var(--curve-light);
@@ -302,8 +338,8 @@ input,textarea{font-family:inherit;font-size:16px}
   margin-bottom:6px;padding:6px 7px;border-radius:7px;
   font-size:12px;font-weight:500;color:var(--text-1);line-height:1.5;
   overflow-wrap:break-word;word-break:normal;cursor:pointer;transition:transform .15s;
-  background:#fff;
-  border:1px solid var(--border-light);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 18%, #fff);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 30%, transparent);
   border-left:3px solid var(--cat-color,#ccc);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
@@ -361,8 +397,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .month-day-pill{
   font-size:10px;font-weight:500;line-height:1.3;
   padding:1px 5px;border-radius:3px;color:var(--text-1);
-  background:#fff;
-  border:1px solid var(--border-light);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 20%, #fff);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 32%, transparent);
   border-left:2px solid var(--cat-color,#ccc);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
