@@ -264,10 +264,10 @@ input,textarea{font-family:inherit;font-size:16px}
 ================================================================= */
 .pill-row{
   display:flex;align-items:flex-start;gap:10px;
-  background:color-mix(in srgb, var(--cat-color,#ccc) 14%, #fff);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 7%, #fff);
   border-radius:var(--radius-sm);
   padding:11px 14px 11px 12px;
-  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 25%, transparent);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 14%, transparent);
   border-left:4px solid var(--cat-color,#ccc);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   transition:all .18s var(--curve-light);
@@ -338,8 +338,8 @@ input,textarea{font-family:inherit;font-size:16px}
   margin-bottom:6px;padding:6px 7px;border-radius:7px;
   font-size:12px;font-weight:500;color:var(--text-1);line-height:1.5;
   overflow-wrap:break-word;word-break:normal;cursor:pointer;transition:transform .15s;
-  background:color-mix(in srgb, var(--cat-color,#ccc) 18%, #fff);
-  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 30%, transparent);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 9%, #fff);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 18%, transparent);
   border-left:3px solid var(--cat-color,#ccc);
   box-shadow:0 1px 3px rgba(0,0,0,.025);
   display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;
@@ -397,10 +397,11 @@ input,textarea{font-family:inherit;font-size:16px}
 .month-day-pill{
   font-size:10px;font-weight:500;line-height:1.3;
   padding:1px 5px;border-radius:3px;color:var(--text-1);
-  background:color-mix(in srgb, var(--cat-color,#ccc) 20%, #fff);
-  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 32%, transparent);
+  background:color-mix(in srgb, var(--cat-color,#ccc) 11%, #fff);
+  border:1px solid color-mix(in srgb, var(--cat-color,#ccc) 20%, transparent);
   border-left:2px solid var(--cat-color,#ccc);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;word-break:break-word;white-space:normal;
 }
 .month-day-pill.more{
   background:var(--pink-1)!important;border-color:var(--border-light)!important;
@@ -1216,10 +1217,11 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .pill-list{grid-template-columns:repeat(3,1fr)}
   /* 内容区左右内边距收紧，让月历网格尽量顶满 */
   .main{padding-left:8px;padding-right:8px}
-  /* 月历单元格：宽高比 1.45:1（横向拉宽、纵向压扁），6 行月历一屏可看 */
-  .month-day{aspect-ratio:1.45}
-  .month-weekday{padding:6px 0;font-size:12px}
-  .month-day-pill{font-size:11px;line-height:1.35;padding:2px 6px}
+  /* 月历单元格：宽高比 1.95:1（更扁），6 行月历一屏可看；月历头部/标题更紧凑 */
+  .month-day{aspect-ratio:1.95}
+  .month-weekday{padding:4px 0;font-size:12px}
+  .month-header-bar{margin-bottom:8px}
+  .month-day-pill{font-size:10px;line-height:1.3;padding:1px 5px}
 }
 @media (orientation: landscape) and (max-height: 640px) {
   .home-screen{flex-direction:row;flex-wrap:wrap;align-content:center;gap:14px;padding:20px 30px}
