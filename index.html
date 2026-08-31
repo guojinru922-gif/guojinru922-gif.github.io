@@ -972,6 +972,11 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   height:80px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
 }
 .ck-cell-inner{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden}
+/* 月历格里显示顺序：日号 → 蓝色88购买 → 黄色pdd指示器/备注（蓝色在上、黄色在下） */
+.ck-cell-inner .ck-day-num{order:1}
+.ck-cell-inner .ck-88-list{order:2}
+.ck-cell-inner .ck-indicators{order:3}
+.ck-cell-inner .ck-pdd-note{order:4}
 .ck-cell .ck-88-list{flex:1;min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
   font-size:9.5px;background:#E8F2FF;color:var(--c-work);
