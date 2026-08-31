@@ -172,6 +172,7 @@ input,textarea{font-family:inherit;font-size:16px}
 .date-strip-today-btn{
   font-size:12px;font-weight:600;padding:5px 14px;border-radius:14px;
   background:transparent;color:var(--accent);border:1px solid var(--border);transition:all .2s;
+  margin-left:8px;flex-shrink:0;
 }
 .date-strip-today-btn:active{background:var(--accent-soft);transform:scale(.95)}
 
@@ -1354,9 +1355,9 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
         <div class="date-strip-nav-arrow" onclick="UI.navPrev()" title="上个月/上一周">〈</div>
         <div class="date-strip-month" id="dateStripMonth">8月</div>
         <div class="date-strip-nav-arrow" onclick="UI.navNext()" title="下个月/下一周">〉</div>
+        <button class="date-strip-today-btn" onclick="UI.goToToday()">今天</button>
       </div>
       <div class="filter-bar-inline" id="filterBarInline"></div>
-      <button class="date-strip-today-btn" onclick="UI.goToToday()">今天</button>
     </div>
     <div class="date-strip-wrapper" id="dateStripWrapper">
       <div class="date-strip" id="dateStrip"></div>
