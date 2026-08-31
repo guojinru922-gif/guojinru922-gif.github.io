@@ -157,9 +157,12 @@ input,textarea{font-family:inherit;font-size:16px}
 .date-chip.selected.wk0 .date-chip-num{color:#C84040}
 .date-chip.selected.wk0 .date-chip-day{color:rgba(200,64,64,.6)}
 
-/* Date Strip Header (nav arrows + month label + today button) */
-.date-strip-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px 0px}
-.date-strip-header-left{display:flex;align-items:center;gap:2px}
+/* Date Strip Header (nav arrows + month label + filter chips inline + today button) */
+.date-strip-header{display:flex;align-items:center;gap:10px;padding:10px 12px 4px 0px;flex-wrap:nowrap}
+.date-strip-header-left{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.filter-bar-inline{flex:1;display:flex;gap:6px;align-items:center;justify-content:flex-end;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;min-width:0}
+.filter-bar-inline::-webkit-scrollbar{display:none}
+.filter-bar-inline:empty{display:none}
 .date-strip-nav-arrow{
   width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:15px;color:var(--text-3);transition:all .15s;line-height:1;
@@ -363,6 +366,8 @@ input,textarea{font-family:inherit;font-size:16px}
 .filter-chip:active{transform:scale(.95)}
 .filter-chip.active{border-color:currentColor;opacity:1}
 .filter-chip .chip-emoji{font-size:13px;flex-shrink:0}
+/* 头部内联筛选条：周/月视图用，比主内容里更紧凑 */
+.filter-bar-inline .filter-chip{padding:4px 10px;font-size:10.5px;gap:3px}
 
 /* ===== Month View ===== */
 .month-section{margin-bottom:20px}
@@ -1350,6 +1355,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
         <div class="date-strip-month" id="dateStripMonth">8月</div>
         <div class="date-strip-nav-arrow" onclick="UI.navNext()" title="下个月/下一周">〉</div>
       </div>
+      <div class="filter-bar-inline" id="filterBarInline"></div>
       <button class="date-strip-today-btn" onclick="UI.goToToday()">今天</button>
     </div>
     <div class="date-strip-wrapper" id="dateStripWrapper">
@@ -2451,6 +2457,7 @@ const UI = {
   init() {
     Storage.load();
     if (localStorage.getItem('pref_reduce_motion') === '1') document.body.classList.add('reduce-motion');
+    document.body.setAttribute('data-view', state.view || 'day');
     UI.render();
     UI.updateSyncBadge();
     UI.updateSyncUI();
@@ -2459,6 +2466,7 @@ const UI = {
     UI._attachAddTypeBtn();
     UI.updateDateStripVisibility();
     UI.initDateStripScroll();
+    UI.renderInlineFilterBar();
     Sync.init();
 
     // Auto sync when page becomes visible (multi-device: switching back to app)
@@ -2496,6 +2504,7 @@ const UI = {
     UI.renderDateStrip();
     UI.updateDateStripVisibility();
     UI.updateDateStripMonth();
+    UI.renderInlineFilterBar();
     const addBar = document.getElementById('addBar');
     if (view === 'month') {
       addBar.classList.add('hidden');
@@ -2725,8 +2734,6 @@ const UI = {
     const wdNames = ['日','一','二','三','四','五','六'];
     let html = '';
 
-    html += UI.renderFilterBar();
-
     html += '<div class="week-view-wrap">';
     html += '<div class="week-view-table">';
 
@@ -2818,8 +2825,7 @@ const UI = {
 
     let html = '';
 
-    // Unified filter bar
-    html += UI.renderFilterBar();
+    // 筛选条已上移到 header（#filterBarInline），不在这里重复渲染
 
     // Month header
     html += `<div class="month-header-bar">
@@ -3052,6 +3058,23 @@ const UI = {
     });
     html += '</div>';
     return html;
+  },
+
+  /**
+   * 周/月视图：把筛选条注入 header 内的 #filterBarInline 容器（与月份导航同一行）
+   * 日视图：清空容器
+   */
+  renderInlineFilterBar() {
+    const el = document.getElementById('filterBarInline');
+    if (!el) return;
+    if (state.view === 'day') { el.innerHTML = ''; return; }
+    const filterCat = state.filterCategory;
+    let html = '';
+    html += `<div class="filter-chip ${!filterCat ? 'active' : ''}" style="background:var(--pink-1);color:var(--text-2)" onclick="UI.toggleFilter(null)">全部</div>`;
+    CATEGORIES.forEach(cat => {
+      html += `<div class="filter-chip ${filterCat === cat.id ? 'active' : ''}" style="background:${cat.color}1A;color:${cat.textColor || cat.color}" onclick="UI.toggleFilter('${cat.id}')"><span class="chip-emoji">${cat.icon}</span>${cat.name && cat.name !== cat.icon ? ' ' + cat.name : ''}</div>`;
+    });
+    el.innerHTML = html;
   },
 
   updateAddBarInfo() {
@@ -3303,6 +3326,7 @@ const UI = {
     if (catId) state.selectedCategory = catId;
     UI.updateAddBarInfo();
     UI.render();
+    UI.renderInlineFilterBar();
   },
 
   updateSyncBadge() {
