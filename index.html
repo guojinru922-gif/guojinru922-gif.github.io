@@ -971,12 +971,13 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   position:relative;z-index:1;min-width:0;min-height:0;
   height:80px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
 }
-/* 单元格内部改为绝对定位布局（除日号在 flow）：蓝色 88 行（chip 或跨日 bar）统一在 top:30px，pdd 紧跟 48px/60px，间距紧凑且高度齐平 */
-.ck-cell-inner{position:relative;flex:1;min-height:0;overflow:hidden}
-.ck-cell-inner .ck-day-num{order:1;position:relative;z-index:4}
-.ck-cell-inner .ck-88-list{order:2;position:absolute;top:30px;left:0;right:0;height:18px;overflow:hidden}
-.ck-cell-inner .ck-indicators{order:3;position:absolute;top:50px;left:0;right:0;height:14px;overflow:hidden}
-.ck-cell-inner .ck-pdd-note{order:4;position:absolute;top:64px;left:0;right:0;height:14px;overflow:hidden}
+/* 单元格用 flex + 每行固定高度：日号 → 蓝色88 → 黄色pdd指示器 → 黄色pdd备注。
+   每行高度写死，88 行在所有格子（单日/跨日/有无pdd）都落在同一 y，不随内容浮动。 */
+.ck-cell-inner{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden}
+.ck-cell-inner .ck-day-num{order:1;flex:none;height:15px;line-height:15px}
+.ck-cell-inner .ck-88-list{order:2;flex:none;height:17px;min-height:17px;overflow:hidden}
+.ck-cell-inner .ck-indicators{order:3;flex:none;height:14px;min-height:14px;overflow:hidden}
+.ck-cell-inner .ck-pdd-note{order:4;flex:none;height:14px;min-height:14px;overflow:hidden}
 .ck-cell .ck-88-list{min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
   font-size:9.5px;background:#E8F2FF;color:var(--c-work);
@@ -1025,7 +1026,9 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 
 .ck-rng-bar{
   position:absolute;
-  top:34px; height:16px;
+  /* top 需等于单日 88 chip 在 ck-cell 坐标下的位置：4px(padding) + 15px(日号) + 2px(gap) = 21px，
+     这样跨日蓝条与单日蓝色 chip 落在同一水平线 */
+  top:21px; height:17px;
   background:#E6F0FF;
   z-index:1;
   pointer-events:none;
@@ -1054,7 +1057,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   font-size:9.5px;color:var(--c-work);background:#E6F0FF;
   padding:1px 6px;border-radius:4px;line-height:1.35;font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  position:absolute;top:34px;left:-1px;height:16px;
+  position:absolute;top:21px;left:-1px;height:17px;
   /* span N cells: width must equal N × (cellW + 2×border + gap) − 2px (left offset).
      With cellW = 100% + 2px and gap = 2px this simplifies to: */
   width:calc(var(--span,1) * (100% + 4px) - 2px);
