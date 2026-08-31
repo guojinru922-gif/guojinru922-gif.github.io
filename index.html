@@ -971,13 +971,13 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   position:relative;z-index:1;min-width:0;min-height:0;
   height:80px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
 }
-.ck-cell-inner{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden}
-/* 月历格里显示顺序：日号 → 蓝色88购买 → 黄色pdd指示器/备注（蓝色在上、黄色在下） */
-.ck-cell-inner .ck-day-num{order:1}
-.ck-cell-inner .ck-88-list{order:2}
-.ck-cell-inner .ck-indicators{order:3}
-.ck-cell-inner .ck-pdd-note{order:4}
-.ck-cell .ck-88-list{flex:1;min-height:0;overflow:hidden}
+/* 单元格内部改为绝对定位布局（除日号在 flow）：蓝色 88 行（chip 或跨日 bar）统一在 top:30px，pdd 紧跟 48px/60px，间距紧凑且高度齐平 */
+.ck-cell-inner{position:relative;flex:1;min-height:0;overflow:hidden}
+.ck-cell-inner .ck-day-num{order:1;position:relative;z-index:4}
+.ck-cell-inner .ck-88-list{order:2;position:absolute;top:30px;left:0;right:0;height:18px;overflow:hidden}
+.ck-cell-inner .ck-indicators{order:3;position:absolute;top:50px;left:0;right:0;height:14px;overflow:hidden}
+.ck-cell-inner .ck-pdd-note{order:4;position:absolute;top:64px;left:0;right:0;height:14px;overflow:hidden}
+.ck-cell .ck-88-list{min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
   font-size:9.5px;background:#E8F2FF;color:var(--c-work);
   padding:1px 5px;border-radius:4px;
