@@ -1249,6 +1249,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .ck-wrap,.stock-container{max-width:94vw}
   .add-bar{max-width:1000px}
 }
+/* 手机端（<700px）：筛选条 chip 隐藏文字，只显示 emoji + 底色，4 个分类都能塞进一行 */
+@media (max-width: 700px) {
+  .filter-bar-inline .filter-chip{padding:5px 7px;font-size:12px;gap:0}
+  .filter-bar-inline .filter-chip .chip-text{display:none}
+  .filter-bar-inline .filter-chip .chip-emoji{font-size:15px}
+}
 /* ===== Recurring Events (v2) ===== */
 .rec-badge{font-size:10px;line-height:1;opacity:.65;margin-right:4px;flex:none}
 .rec-badge.adj{margin-left:2px;margin-right:0;opacity:.85}
@@ -1365,11 +1371,11 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
         <button class="date-strip-today-btn" onclick="UI.goToToday()">今天</button>
       </div>
       <div class="filter-bar-inline" id="filterBarInline">
-        <div class="filter-chip" data-cat="" onclick="UI.toggleFilter(null)">全部</div>
-        <div class="filter-chip" data-cat="work" onclick="UI.toggleFilter('work')"><span class="chip-emoji">💼</span> 工作记录</div>
-        <div class="filter-chip" data-cat="thoughts" onclick="UI.toggleFilter('thoughts')"><span class="chip-emoji">💭</span> 今日思考</div>
-        <div class="filter-chip" data-cat="housework" onclick="UI.toggleFilter('housework')"><span class="chip-emoji">🧹</span> 家务</div>
-        <div class="filter-chip" data-cat="chore" onclick="UI.toggleFilter('chore')"><span class="chip-emoji">📋</span> 杂事</div>
+        <div class="filter-chip" data-cat="" onclick="UI.toggleFilter(null)"><span class="chip-emoji">●</span><span class="chip-text">全部</span></div>
+        <div class="filter-chip" data-cat="work" onclick="UI.toggleFilter('work')"><span class="chip-emoji">💼</span><span class="chip-text">工作记录</span></div>
+        <div class="filter-chip" data-cat="thoughts" onclick="UI.toggleFilter('thoughts')"><span class="chip-emoji">💭</span><span class="chip-text">今日思考</span></div>
+        <div class="filter-chip" data-cat="housework" onclick="UI.toggleFilter('housework')"><span class="chip-emoji">🧹</span><span class="chip-text">家务</span></div>
+        <div class="filter-chip" data-cat="chore" onclick="UI.toggleFilter('chore')"><span class="chip-emoji">📋</span><span class="chip-text">杂事</span></div>
       </div>
     </div>
     <div class="date-strip-wrapper" id="dateStripWrapper">
