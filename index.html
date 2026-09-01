@@ -655,6 +655,13 @@ body[data-view="month"] .add-bar{display:none !important}
   padding:3px 10px;border-radius:10px;background:var(--pink-1);
 }
 .entry-detail-cat .cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.entry-detail-cat-select{
+  font-size:12px;font-weight:700;color:var(--text-1);
+  padding:4px 8px;border-radius:10px;
+  background:var(--pink-1);border:1px solid var(--border-light);
+  max-width:55%;cursor:pointer;outline:none;
+}
+.entry-detail-cat-select:focus{border-color:var(--accent)}
 .entry-detail-time{font-size:11px;color:var(--text-3);margin-left:auto}
 .entry-detail-close{
   width:28px;height:28px;border-radius:50%;border:none;background:var(--pink-1);
@@ -1657,6 +1664,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   <div class="entry-detail-modal" onclick="event.stopPropagation()">
     <div class="entry-detail-head">
       <span class="entry-detail-cat" id="entryDetailCat"></span>
+      <select class="entry-detail-cat-select" id="entryDetailCatSelect" style="display:none"></select>
       <span class="entry-detail-time" id="entryDetailTime"></span>
       <button class="entry-detail-close" onclick="UI.closeEntryDetail()">×</button>
     </div>
@@ -2486,12 +2494,15 @@ const Entries = {
     Sync.deleteEntry(entryId);
   },
 
-  edit(date, entryId, newContent) {
+  edit(date, entryId, newContent, newCategory) {
     const entries = state.entries[date];
     if (!entries) return;
     const entry = entries.find(e => e.id === entryId);
     if (!entry) return;
-    entry.content = newContent;
+    if (typeof newContent === 'string') entry.content = newContent;
+    if (typeof newCategory === 'string' && newCategory && newCategory !== entry.category) {
+      entry.category = newCategory;
+    }
     entry.updatedAt = Date.now();
     Storage.save();
     Sync.pushEntry(entry, date);
@@ -3690,7 +3701,8 @@ const UI = {
     const overlay = document.getElementById('entryActionsOverlay');
     document.getElementById('entryActionEdit').onclick = () => {
       UI.closeEntryActions();
-      UI.editDayModalEntry(date, entryId);
+      UI.openEntryDetail(date, entryId);
+      UI.editEntryInDetail();
     };
     document.getElementById('entryActionDelete').onclick = () => {
       UI.closeEntryActions();
@@ -3700,7 +3712,7 @@ const UI = {
   },
 
   /* ----- Entry Detail Modal (tap a pill to see full text) ----- */
-  _entryDetailState: { date: null, entryId: null, oldContent: '' },
+  _entryDetailState: { date: null, entryId: null, oldContent: '', oldCategory: '' },
 
   openEntryDetail(date, entryId) {
     const entries = state.entries[date] || [];
@@ -3715,7 +3727,10 @@ const UI = {
     const contentEl = document.getElementById('entryDetailContent');
     contentEl.textContent = entry.content;
     contentEl.contentEditable = 'false';
-    UI._entryDetailState = { date, entryId, oldContent: entry.content };
+    // 编辑态默认隐藏分类下拉、显示分类标签
+    document.getElementById('entryDetailCatSelect').style.display = 'none';
+    document.getElementById('entryDetailCat').style.display = '';
+    UI._entryDetailState = { date, entryId, oldContent: entry.content, oldCategory: entry.category };
     // Recurring: no edit/delete here (manage it in the recurring manager)
     const actionsEl = document.getElementById('entryDetailActions');
     if (entry.recurring) {
@@ -3741,6 +3756,17 @@ const UI = {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+    // 显示分类下拉框，预选当前分类（已记录事件改分类的关键入口）
+    const selEl = document.getElementById('entryDetailCatSelect');
+    const { oldCategory } = UI._entryDetailState;
+    if (!selEl.options.length) {
+      selEl.innerHTML = CATEGORIES
+        .filter(c => !REMOVED_CATS.includes(c.id))
+        .map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    }
+    selEl.value = oldCategory;
+    selEl.style.display = '';
+    document.getElementById('entryDetailCat').style.display = 'none';
     const actionsEl = document.getElementById('entryDetailActions');
     actionsEl.innerHTML =
       `<button class="entry-detail-btn edit" onclick="UI.cancelEditEntryInDetail()">取消</button>` +
@@ -3750,6 +3776,9 @@ const UI = {
     const contentEl = document.getElementById('entryDetailContent');
     contentEl.contentEditable = 'false';
     contentEl.textContent = UI._entryDetailState.oldContent;
+    // 还原为分类标签显示
+    document.getElementById('entryDetailCatSelect').style.display = 'none';
+    document.getElementById('entryDetailCat').style.display = '';
     const { date, entryId } = UI._entryDetailState;
     const actionsEl = document.getElementById('entryDetailActions');
     actionsEl.innerHTML =
@@ -3759,14 +3788,25 @@ const UI = {
   saveEntryInDetail() {
     const contentEl = document.getElementById('entryDetailContent');
     const newContent = contentEl.textContent.trim();
-    const { date, entryId, oldContent } = UI._entryDetailState;
+    const { date, entryId, oldContent, oldCategory } = UI._entryDetailState;
     if (!newContent) { UI.showToast('内容不能为空'); return; }
-    if (newContent !== oldContent) {
-      Entries.edit(date, entryId, newContent);
+    const newCategory = document.getElementById('entryDetailCatSelect').value;
+    const catChanged = newCategory && newCategory !== oldCategory;
+    if (newContent !== oldContent || catChanged) {
+      Entries.edit(date, entryId, newContent, newCategory);
       UI._entryDetailState.oldContent = newContent;
-      UI.showToast('已保存');
+      UI._entryDetailState.oldCategory = newCategory;
+      UI.showToast(catChanged ? '已保存（分类已更新）' : '已保存');
+      UI.render(); // 立即刷新日/周/月视图的色条与分类
+      if (state.dayModalDate) UI.renderDayModalBody(state.dayModalDate);
     }
     contentEl.contentEditable = 'false';
+    // 保存后刷新分类标签显示
+    const cat = CAT_MAP[newCategory] || CAT_MAP.work;
+    document.getElementById('entryDetailCat').innerHTML =
+      `<span class="cat-dot" style="background:${cat.color}"></span>${UI.catLabel(cat)}`;
+    document.getElementById('entryDetailCatSelect').style.display = 'none';
+    document.getElementById('entryDetailCat').style.display = '';
     const actionsEl = document.getElementById('entryDetailActions');
     actionsEl.innerHTML =
       `<button class="entry-detail-btn edit" onclick="UI.editEntryInDetail()">✏️ 编辑</button>` +
