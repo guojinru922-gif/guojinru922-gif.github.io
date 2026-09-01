@@ -978,6 +978,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-cell-inner .ck-88-list{order:2;flex:none;height:17px;min-height:17px;overflow:hidden}
 .ck-cell-inner .ck-indicators{order:3;flex:none;height:14px;min-height:14px;overflow:hidden}
 .ck-cell-inner .ck-pdd-note{order:4;flex:none;height:14px;min-height:14px;overflow:hidden}
+/* 跨日段：内容已由 rngBar + rngLabel 表示，隐藏 ck-88-list 里的 chip 避免蓝色叠加。
+   用 visibility 而非 display，保持占位高度一致 → 跨日/单日的蓝色行落在同一 y。 */
+.ck-cell.ck-rng-start .ck-88-list,
+.ck-cell.ck-rng-mid .ck-88-list,
+.ck-cell.ck-rng-end .ck-88-list,
+.ck-cell.ck-rng-only .ck-88-list{visibility:hidden}
 .ck-cell .ck-88-list{min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
   font-size:9.5px;background:#E8F2FF;color:var(--c-work);
