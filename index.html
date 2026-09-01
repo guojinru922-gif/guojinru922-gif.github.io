@@ -934,12 +934,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 /* ===== Checkin Page (unified calendar) ===== */
 .ck-page-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
 .ck-page-title{margin:0;font-size:18px;font-weight:700;color:var(--text-1)}
-.ck-wrap{padding:8px 12px 80px;max-width:600px;margin:0 auto}
-.ck-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:2px 4px}
+.ck-wrap{padding:8px 14px 80px;max-width:680px;margin:0 auto}
+.ck-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:2px 4px}
 .ck-title{font-size:16px;font-weight:700;color:var(--text-1)}
 .ck-nav{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit;color:var(--text-2)}
 .ck-nav:active{background:var(--pink-2)}
-.ck-action-row{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.ck-action-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
 .ck-act-btn{
   flex:1;min-width:0;padding:9px 12px;border-radius:12px;border:1.5px solid var(--border);
   background:var(--surface);color:var(--text-2);
@@ -950,35 +950,35 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-act-btn.ck-act-ok{background:linear-gradient(135deg,#5BCB5B,#4CAF50);color:#fff;border-color:transparent}
 .ck-hint{font-size:11px;color:var(--text-3);padding:6px 10px;background:var(--pink-1);border-radius:8px;margin-bottom:8px;text-align:center}
 
-.ck-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-bottom:4px}
-.ck-weekdays > div{text-align:center;font-size:11px;font-weight:600;color:var(--text-3);padding:4px 0}
+.ck-weekdays{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-bottom:6px}
+.ck-weekdays > div{text-align:center;font-size:12px;font-weight:600;color:var(--text-2);padding:4px 0}
 .ck-weekdays .sat{color:#E89040}
 .ck-weekdays .sun{color:#E87870}
 
 .ck-grid{
   display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
-  grid-auto-rows:80px;
+  grid-auto-rows:110px;
   grid-auto-flow:dense;
-  gap:4px;position:relative;touch-action:pan-y;
+  gap:6px;position:relative;touch-action:pan-y;
   align-items:stretch;
 }
 .ck-grid.selecting{touch-action:none}
 /* Calendar cells: fixed height + overflow hidden, content scales to fit */
 .ck-cell{
-  border:1px solid var(--border-light);border-radius:8px;padding:4px 5px;
+  border:1px solid var(--border-light);border-radius:8px;padding:6px 7px;
   background:var(--surface);
   display:flex;flex-direction:column;gap:2px;cursor:pointer;
   position:relative;z-index:1;min-width:0;min-height:0;
-  height:80px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
+  height:110px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
 }
 /* 单元格用 flex + 每行固定高度：日号 → 蓝色88 → 黄色pdd指示器 → 黄色pdd备注。
    每行高度写死，88 行在所有格子（单日/跨日/有无pdd）都落在同一 y，不随内容浮动。
-   gap 1px / day-num 12px 让 88 和 pdd 行紧凑挨着（pdd 抬高）。 */
-.ck-cell-inner{display:flex;flex-direction:column;gap:1px;flex:1;min-height:0;overflow:hidden}
-.ck-cell-inner .ck-day-num{order:1;flex:none;height:12px;line-height:12px}
-.ck-cell-inner .ck-88-list{order:2;flex:none;height:17px;min-height:17px;overflow:hidden}
-.ck-cell-inner .ck-indicators{order:3;flex:none;height:14px;min-height:14px;overflow:hidden}
-.ck-cell-inner .ck-pdd-note{order:4;flex:none;height:14px;min-height:14px;overflow:hidden}
+   gap 2px / day-num 16px / 88-list 22px / indicators 18px / pdd-note 20px：让所有内容能完整显示。 */
+.ck-cell-inner{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden}
+.ck-cell-inner .ck-day-num{order:1;flex:none;height:16px;line-height:16px}
+.ck-cell-inner .ck-88-list{order:2;flex:none;height:22px;min-height:22px;overflow:hidden}
+.ck-cell-inner .ck-indicators{order:3;flex:none;height:18px;min-height:18px;overflow:hidden}
+.ck-cell-inner .ck-pdd-note{order:4;flex:none;height:20px;min-height:20px;overflow:hidden}
 /* 跨日段：内容已由 rngBar + rngLabel 表示，隐藏 ck-88-list 里的 chip 避免蓝色叠加。
    用 visibility 而非 display，保持占位高度一致 → 跨日/单日的蓝色行落在同一 y。 */
 .ck-cell.ck-rng-start .ck-88-list,
@@ -987,39 +987,39 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-cell.ck-rng-only .ck-88-list{visibility:hidden}
 .ck-cell .ck-88-list{min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
-  /* 配色参考今日记录月视图的 .month-day-pill：浅色背景 + 分类色文字 */
-  font-size:9.5px;color:var(--c-work);background:color-mix(in srgb, var(--c-work) 11%, #fff);
-  padding:1px 5px;border-radius:4px;
+  /* 配色参考今日记录月视图的 .month-day-pill：浅色背景 + 文字统一深灰（更易读、跨日/单日视觉一致） */
+  font-size:11px;color:var(--text-1);background:color-mix(in srgb, var(--c-work) 11%, #fff);
+  padding:3px 8px;border-radius:4px;
   overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;line-height:1.3;font-weight:600;
+  white-space:nowrap;line-height:1.4;font-weight:600;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
   /* 去掉边框，与跨日 rngBar 视觉一致（都是纯色块、无框线） */
   border:none;
 }
 .ck-cell .ck-pdd-note{
-  font-size:9.5px;color:var(--text-2);background:#FFF8E5;
-  padding:1px 4px;border-radius:4px;line-height:1.3;
+  font-size:11px;color:var(--text-1);background:color-mix(in srgb, #E87870 11%, #fff);
+  padding:3px 7px;border-radius:4px;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
 }
 .ck-88-overflow{
-  font-size:9px;color:var(--text-3);opacity:.7;padding:1px 4px;
+  font-size:10px;color:var(--text-2);opacity:.7;padding:2px 5px;
   background:var(--pink-1);border-radius:3px;text-align:center;line-height:1.3;
 }
 .ck-cell:active{background:var(--pink-1)}
 .ck-cell.outside{opacity:.4}
 .ck-cell.today{border-color:var(--c-work);box-shadow:0 0 0 2px rgba(107,155,210,.18)}
-.ck-day-num{font-size:11px;font-weight:600;color:var(--text-1);position:relative;z-index:3}
-.ck-cell.today .ck-day-num{background:var(--c-work);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px}
-.ck-indicators{display:flex;gap:3px;flex-wrap:wrap;position:relative;z-index:3}
-.ck-ic{font-size:11px;line-height:1}
-.ck-ic-pdd{color:#E87870;font-weight:700;font-size:10px}
-.ck-ic-pdd-a{color:#5BCB5B;font-size:10px}
-.ck-ic-pdd-b{color:#5BCB5B;font-size:10px}
+.ck-day-num{font-size:12px;font-weight:700;color:var(--text-1);position:relative;z-index:3}
+.ck-cell.today .ck-day-num{background:var(--c-work);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ck-indicators{display:flex;gap:3px;flex-wrap:wrap;position:relative;z-index:3;align-items:center}
+.ck-ic{font-size:13px;line-height:1}
+.ck-ic-pdd{color:#E87870;font-weight:700;font-size:12px}
+.ck-ic-pdd-a{color:#5BCB5B;font-size:12px}
+.ck-ic-pdd-b{color:#5BCB5B;font-size:12px}
 .ck-pdd-note{
-  /* 配色参考今日记录月视图的 .month-day-pill：浅色背景（pdd 红 #E87870 派生）+ pdd 红文字 */
-  font-size:9.5px;color:#E87870;background:color-mix(in srgb, #E87870 11%, #fff);
-  padding:1px 4px;border-radius:4px;line-height:1.3;
+  /* 配色参考今日记录月视图的 .month-day-pill：浅色背景（pdd 红 #E87870 派生）+ 文字统一深灰（更易读） */
+  font-size:11px;color:var(--text-1);background:color-mix(in srgb, #E87870 11%, #fff);
+  padding:3px 7px;border-radius:4px;line-height:1.4;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
 }
@@ -1041,9 +1041,9 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 
 .ck-rng-bar{
   position:absolute;
-  /* top 需等于单日 88 chip 在 ck-cell 坐标下的位置：4px(padding) + 12px(日号) + 1px(gap) = 17px，
+  /* top 需等于单日 88 chip 在 ck-cell 坐标下的位置：6px(padding) + 16px(日号) + 2px(gap) = 24px，
      这样跨日蓝条与单日蓝色 chip 落在同一水平线 */
-  top:17px; height:17px;
+  top:24px; height:22px;
   /* 配色参考今日记录月视图 pill：跨日稍深（18%）单日浅（11%），让跨日条更显眼 */
   background:color-mix(in srgb, var(--c-work) 18%, #fff);
   z-index:1;
@@ -1070,11 +1070,11 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   border-radius:4px;
 }
 .ck-rng-label{
-  /* 配色与 rng-bar 一致（跨日稍深），文字用 c-work 主色 */
-  font-size:9.5px;color:var(--c-work);background:color-mix(in srgb, var(--c-work) 18%, #fff);
-  padding:1px 6px;border-radius:4px;line-height:1.35;font-weight:600;
+  /* 配色与 rng-bar 一致（跨日稍深），文字统一深灰（更易读、跨日/单日视觉一致） */
+  font-size:11px;color:var(--text-1);background:color-mix(in srgb, var(--c-work) 18%, #fff);
+  padding:3px 10px;border-radius:4px;line-height:1.4;font-weight:600;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  position:absolute;top:17px;left:-1px;height:17px;
+  position:absolute;top:24px;left:-1px;height:22px;
   /* span N cells: width must equal N × (cellW + 2×border + gap) − 2px (left offset).
      With cellW = 100% + 2px and gap = 2px this simplifies to: */
   width:calc(var(--span,1) * (100% + 4px) - 2px);
@@ -1197,7 +1197,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 @media (min-width: 700px), (orientation: landscape) and (min-height: 500px) {
   #app{max-width:860px}
   .stock-container{max-width:860px}
-  .ck-wrap{max-width:860px}
+  .ck-wrap{max-width:920px}
   .home-cards{max-width:560px}
   .add-bar{max-width:860px;padding-left:24px;padding-right:24px}
   .main{padding:14px 22px 150px}
@@ -1259,20 +1259,21 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   /* 月历单元格：宽高比 2.0:1（适度高），配合 12px 字号让 6 行月历一屏可看且文字可读 */
   .month-day{aspect-ratio:2.0}
   .month-weekday{padding:4px 0;font-size:12px}
-  /* 签到页月历单元格：电脑端格子更高（aspect-ratio 1.6 ≈ 173→108px），参考今日记录配色 */
-  .ck-cell{aspect-ratio:1.6;min-height:108px}
-  .ck-cell-inner .ck-day-num { font-size:14px; height:20px; line-height:20px; }
-  .ck-cell-inner .ck-88-list { height:24px; min-height:24px; }
-  .ck-cell-inner .ck-indicators { height:20px; min-height:20px; }
-  .ck-cell-inner .ck-pdd-note { height:20px; min-height:20px; }
-  /* 字号加大：电脑端 chip/pdd-note 13px（手机端保持 9.5px） */
-  .ck-cell .ck-88-chip { font-size:13px; padding:4px 10px; }
-  .ck-cell .ck-pdd-note { font-size:13px; padding:4px 9px; line-height:1.4; }
-  .ck-ic { font-size:14px !important }
-  .ck-ic-pdd,.ck-ic-pdd-a,.ck-ic-pdd-b { font-size:13px !important }
-  /* 跨日 rngBar 跟随 88-list 位置：4(pad)+20(day-num)+1(gap)=25 */
-  .ck-rng-bar,.ck-rng-label { top:25px !important; height:24px; }
-  .ck-rng-label { line-height:18px; }
+  /* 签到页月历单元格：电脑端格子更高（aspect-ratio 1.4 ≈ 115→130px），所有文字统一深灰，做满一屏 */
+  .ck-cell{aspect-ratio:1.4;min-height:130px;padding:8px 10px}
+  .ck-cell-inner{gap:2px}
+  .ck-cell-inner .ck-day-num { font-size:15px; height:22px; line-height:22px; }
+  .ck-cell-inner .ck-88-list { height:28px; min-height:28px; }
+  .ck-cell-inner .ck-indicators { height:22px; min-height:22px; }
+  .ck-cell-inner .ck-pdd-note { height:24px; min-height:24px; }
+  /* 字号加大：电脑端 chip/pdd-note 14px（深灰），撑满各自行 */
+  .ck-cell .ck-88-chip { font-size:14px; padding:4px 12px; line-height:1.4; }
+  .ck-cell .ck-pdd-note { font-size:14px; padding:2px 11px; line-height:1.4; }
+  .ck-ic { font-size:15px !important }
+  .ck-ic-pdd,.ck-ic-pdd-a,.ck-ic-pdd-b { font-size:14px !important }
+  /* 跨日 rngBar 跟随 88-list 位置：8(pad)+22(day-num)+2(gap)=32 */
+  .ck-rng-bar,.ck-rng-label { top:32px !important; height:28px; }
+  .ck-rng-label { padding:4px 14px; line-height:1.4; font-size:14px; }
   .month-header-bar{margin-bottom:6px}
   .month-title-big{font-size:18px}
   .month-section{margin-bottom:12px}
