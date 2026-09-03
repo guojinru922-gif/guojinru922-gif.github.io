@@ -1234,17 +1234,20 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .pill-list{grid-template-columns:repeat(3,1fr)}
   /* 内容区左右内边距收紧，让月历网格尽量顶满 */
   .main{padding-left:8px;padding-right:8px}
+  /* 签到页：月历容器撑满 .main 整屏高度，格子用 1fr 等分（6行就大、填满屏；每格等大、一屏显示） */
+  #mainContent:has(.ck-wrap){display:flex;flex-direction:column}
+  #mainContent:has(.ck-wrap) .ck-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:16px}
+  #mainContent:has(.ck-wrap) .ck-grid{flex:1;min-height:0;grid-auto-rows:minmax(0,1fr)}
   /* 月历单元格：宽高比 2.0:1（适度高），配合 12px 字号让 6 行月历一屏可看且文字可读 */
   .month-day{aspect-ratio:2.0}
   .month-weekday{padding:4px 0;font-size:12px}
-  /* 签到页月历单元格：电脑端格子固定高度 110px（不用 aspect-ratio，避免宽屏时格子变大导致 6 行出屏）。
-     每格大小一致，4/5/6 行的月历都自然适配。 */
-  .ck-cell{height:110px;min-height:110px;max-height:110px;padding:8px 10px}
-  .ck-cell-inner{grid-template-rows:auto minmax(28px,1fr) auto;gap:2px}
-  .ck-cell-inner .ck-day-num { font-size:15px; height:22px; line-height:22px; gap:4px; }
-  .ck-cell-inner .ck-day-num .ck-day-checks { font-size:12px; }
-  .ck-cell-inner .ck-88-list { min-height:28px; }
-  .ck-cell-inner .ck-pdd-note { min-height:24px; font-size:13px; padding:3px 10px; }
+  /* 签到页月历：电脑端撑满整屏，格子 1fr 等分（每格等大、一屏显示、利用全部竖向空间） */
+  .ck-cell{padding:8px 10px}
+  .ck-cell-inner{gap:3px;justify-content:flex-start}
+  .ck-cell-inner .ck-day-num { font-size:16px; height:26px; line-height:26px; gap:4px; }
+  .ck-cell-inner .ck-day-num .ck-day-checks { font-size:13px; }
+  .ck-cell-inner .ck-88-list { height:36px; min-height:36px; }
+  .ck-cell-inner .ck-pdd-note { height:32px; min-height:32px; font-size:14px; padding:3px 10px; }
   /* 字号加大：电脑端 chip 14px（深灰），撑满各自行；ck-day-checks 12px 跟随 */
   .ck-cell .ck-88-chip { font-size:14px; padding:3px 10px; line-height:1.4; }
   .ck-88-overflow { font-size:11px; padding:2px 6px; }
