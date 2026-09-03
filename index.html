@@ -1236,29 +1236,32 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .pill-list{grid-template-columns:repeat(3,1fr)}
   /* 内容区左右内边距收紧，让月历网格尽量顶满 */
   .main{padding-left:8px;padding-right:8px}
-  /* 签到页：电脑端月历撑满整屏，格子 1fr 等分（每格等大、一屏显示）。
-     注意：签到页容器是 #checkinPage > #checkinContent，不是 #mainContent（那是"今日"页），
-     之前用 #mainContent:has(.ck-wrap) 选错容器，规则从未生效，所以一直"折叠"。 */
-  #checkinPage{display:flex;flex-direction:column}
-  #checkinContent{flex:1;min-height:0;display:flex;flex-direction:column}
-  #checkinContent .ck-wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:16px}
-  #checkinContent .ck-grid{flex:1;min-height:0;grid-auto-rows:minmax(0,1fr)}
+  /* ===== 签到页电脑端（关键）=====
+     之前错误：flex 撑屏链 + grid-auto-rows:minmax(0,1fr) 把月历撑满整屏，
+     导致 4 行/5 行/6 行月历的"每格高度"随月份变化（4 行月历每格 ~200px、6 行月历每格 ~130px），
+     用户量了"今日记录"页 .month-day{aspect-ratio:2.0} = 210×105 后反馈"每个月大小都不一样"。
+     正确做法：取消 flex 撑屏、月历按实际行数自然展开，但每格固定 105px 高
+     （=今日记录页单格高），4/5/6 行月份每格都一样大。 */
+  #checkinPage{display:block}
+  #checkinContent{display:block}
+  /* 每格固定 105px，覆盖基础 .ck-grid 的 90px（移动端不受影响） */
+  .ck-grid{grid-auto-rows:105px !important}
   /* 月历单元格：宽高比 2.0:1（适度高），配合 12px 字号让 6 行月历一屏可看且文字可读 */
   .month-day{aspect-ratio:2.0}
   .month-weekday{padding:4px 0;font-size:12px}
-  /* 签到页月历：电脑端撑满整屏，格子 1fr 等分（每格等大、一屏显示、利用全部竖向空间）
-     子元素用 min-height 留出弹性，cell-inner 总和（26+36+32=94 + padding 16 + gap*2 4 = 114px）尽量小于 cell 实际高度（1fr 自然分配 ≈ 130-160），
-     让所有 88 + pdd 内容都看得到，且同月每格等大、无溢出。 */
-  .ck-cell{padding:6px 8px}
-  .ck-cell-inner{gap:3px}
-  /* 子元素不用 height 写死（写死会撑变形），只用 min-height 兜底 + line-height 紧凑 */
-  .ck-cell-inner .ck-day-num { font-size:15px; min-height:24px; line-height:24px; gap:4px; }
-  .ck-cell-inner .ck-day-num .ck-day-checks { font-size:12px; }
-  .ck-cell-inner .ck-88-list { min-height:32px; display:flex; align-items:center; gap:4px; flex-wrap:nowrap; }
-  .ck-cell-inner .ck-pdd-note { min-height:32px; font-size:13px; padding:3px 10px; line-height:1.4; }
-  /* 电脑端 chip 字号从 14 降到 13（更协调、不显大），overflow 跟随 ck-88-overflow 基础样式 */
-  .ck-cell .ck-88-chip { font-size:13px; padding:3px 9px; line-height:1.4; display:block; flex:1; min-width:0; }
-  .ck-88-overflow { font-size:11px; padding:2px 6px; }
+  /* 签到页月历格子：每格固定 105px 后的内部分配
+     cell padding 5+7=12，内可用 93px
+     day-num 22 + gap 2 + 88-list 26 + gap 2 + pdd 26 = 78px，富 15px 留格底空白（顶部对齐） */
+  .ck-cell{padding:5px 7px}
+  .ck-cell-inner{gap:2px}
+  /* 子元素用 min-height 兜底：88 蓝条和 pdd 橙条统一 26px、相同字号，视觉等高 */
+  .ck-cell-inner .ck-day-num { font-size:14px; min-height:22px; line-height:22px; gap:4px; }
+  .ck-cell-inner .ck-day-num .ck-day-checks { font-size:11px; }
+  .ck-cell-inner .ck-88-list { min-height:26px; display:flex; align-items:center; gap:4px; flex-wrap:nowrap; }
+  .ck-cell-inner .ck-pdd-note { min-height:26px; font-size:12px; padding:2px 8px; line-height:1.4; }
+  /* 88 chip 收紧：font-size 12 + padding 2×8 + line-height 1.4 ≈ 24px 实际 → 与 pdd 等高 */
+  .ck-cell .ck-88-chip { font-size:12px; padding:2px 8px; line-height:1.4; display:block; flex:1; min-width:0; }
+  .ck-88-overflow { font-size:10px; padding:1px 5px; }
   .ck-ic { font-size:15px !important }
   .ck-ic-pdd,.ck-ic-pdd-a,.ck-ic-pdd-b { font-size:14px !important }
   .month-header-bar{margin-bottom:6px}
