@@ -976,7 +976,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   background:var(--surface);
   display:flex;flex-direction:column;gap:2px;cursor:pointer;
   position:relative;z-index:1;min-width:0;min-height:0;
-  height:80px;overflow:visible;  /* allow multi-day rng-bar/label to bridge across cells */
+  height:80px;overflow:hidden;  /* 内容不出格，杜绝跨格重叠 */
 }
 /* 单元格用 flex + 每行固定高度：日号 → 蓝色88 → 黄色pdd指示器 → 黄色pdd备注。
    每行高度写死，88 行在所有格子（单日/跨日/有无pdd）都落在同一 y，不随内容浮动。
@@ -986,12 +986,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-cell-inner .ck-88-list{order:2;flex:none;height:17px;min-height:17px;overflow:hidden}
 .ck-cell-inner .ck-indicators{order:3;flex:none;height:14px;min-height:14px;overflow:hidden}
 .ck-cell-inner .ck-pdd-note{order:4;flex:none;height:14px;min-height:14px;overflow:hidden}
-/* 跨日段：内容已由 rngBar + rngLabel 表示，隐藏 ck-88-list 里的 chip 避免蓝色叠加。
-   用 visibility 而非 display，保持占位高度一致 → 跨日/单日的蓝色行落在同一 y。 */
-.ck-cell.ck-rng-start .ck-88-list,
-.ck-cell.ck-rng-mid .ck-88-list,
-.ck-cell.ck-rng-end .ck-88-list,
-.ck-cell.ck-rng-only .ck-88-list{visibility:hidden}
+/* 多日 88 事件：每一天都在自己格子里显示 88 chip（与单日一致），不再用跨格桥接条。
+   连续范围用整格淡蓝底（.ck-rng）提示，绝不溢出到相邻格子。 */
 .ck-cell .ck-88-list{min-height:0;overflow:hidden}
 .ck-cell .ck-88-chip{
   /* 88 购买底色：用更亮的蓝 #3B82F6 派生（比全局灰蓝 --c-work 更蓝更亮）；文字深灰、不加粗 */
@@ -1000,7 +996,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;line-height:1.3;font-weight:400;
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
-  /* 去掉边框，与跨日 rngBar 视觉一致（都是纯色块、无框线） */
+  /* 去掉边框，纯色块、无框线，与多日范围整格淡蓝底风格一致 */
   border:none;
 }
 .ck-cell .ck-pdd-note{
@@ -1031,62 +1027,10 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
 }
 
-/* Multi-day 88 purchase: one bar per cell, visually merging into a continuous
-   pill across the range. Range cells lose their border so no thin frame breaks
-   the stripe. The label spans the full segment width (--span set inline) so
-   text like "随便写" over 8.31–9.2 displays across all 3 cells instead of being
-   squeezed into the first cell. */
-.ck-cell{position:relative}
-/* Hide the cell border + today halo inside a multi-day range so the bar reads
-   as one continuous shape (no thin dark frame around each cell). */
-.ck-cell.ck-rng-start,
-.ck-cell.ck-rng-mid,
-.ck-cell.ck-rng-end { border-color:transparent; }
-.ck-cell.ck-rng-start.today,
-.ck-cell.ck-rng-mid.today,
-.ck-cell.ck-rng-end.today { box-shadow:none; }
-
-.ck-rng-bar{
-  position:absolute;
-  /* top 需等于单日 88 chip 在 ck-cell 坐标下的位置：4px(padding) + 12px(日号) + 1px(gap) = 17px，
-     这样跨日蓝条与单日蓝色 chip 落在同一水平线 */
-  top:17px; height:17px;
-  /* 跨日稍深（20%）单日浅（12%），更亮的蓝 #3B82F6 派生，让跨日条更显眼也更蓝 */
-  background:color-mix(in srgb, #3B82F6 20%, #fff);
-  z-index:1;
-  pointer-events:none;
-}
-/* Start: rounded on the left (pill head), flat on the right (joins the next cell) */
-.ck-cell.ck-rng-start .ck-rng-bar{
-  left:0; right:-1px;
-  border-radius:4px 0 0 4px;
-}
-/* Mid: flat all sides — the straight stripe between the rounded ends */
-.ck-cell.ck-rng-mid .ck-rng-bar{
-  left:-1px; right:-1px;
-  border-radius:0;
-}
-/* End: flat on the left (joins the previous cell), rounded on the right (pill tail) */
-.ck-cell.ck-rng-end .ck-rng-bar{
-  left:-1px; right:0;
-  border-radius:0 4px 4px 0;
-}
-/* Only (single-cell segment, edge case): full pill */
-.ck-cell.ck-rng-only .ck-rng-bar{
-  left:0; right:0;
-  border-radius:4px;
-}
-.ck-rng-label{
-  /* 跨日 88 文字标签：更亮蓝底 + 深灰文字 + 不加粗（与单日 chip 视觉一致） */
-  font-size:9.5px;color:var(--text-1);background:color-mix(in srgb, #3B82F6 20%, #fff);
-  padding:1px 6px;border-radius:4px;line-height:1.35;font-weight:400;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  position:absolute;top:17px;left:-1px;height:17px;
-  /* span N cells: width must equal N × (cellW + 2×border + gap) − 2px (left offset).
-     With cellW = 100% + 2px and gap = 2px this simplifies to: */
-  width:calc(var(--span,1) * (100% + 4px) - 2px);
-  z-index:3;
-}
+/* Multi-day 88 purchase range: tint the whole cell lightly so the streak reads
+   as continuous WITHOUT any element overflowing into neighbours. */
+.ck-cell.ck-rng{background:color-mix(in srgb, #3B82F6 7%, #fff)}
+.ck-cell.ck-rng.today{background:color-mix(in srgb, #3B82F6 12%, #fff)}
 
 /* Selection mode highlighting */
 .ck-cell.selecting{cursor:pointer}
@@ -1278,9 +1222,6 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   .ck-cell .ck-pdd-note { font-size:14px; padding:2px 11px; line-height:1.4; }
   .ck-ic { font-size:15px !important }
   .ck-ic-pdd,.ck-ic-pdd-a,.ck-ic-pdd-b { font-size:14px !important }
-  /* 跨日 rngBar 跟随 88-list 位置：8(pad)+22(day-num)+2(gap)=32 */
-  .ck-rng-bar,.ck-rng-label { top:32px !important; height:28px; }
-  .ck-rng-label { padding:4px 14px; line-height:1.4; font-size:14px; }
   .month-header-bar{margin-bottom:6px}
   .month-title-big{font-size:18px}
   .month-section{margin-bottom:12px}
@@ -4262,85 +4203,41 @@ const CK = {
   },
 
   cellItems(ymd) {
-    // 返回 [{name, id}]：仅单日 88购买 作为单元格内 pill。多日范围交由 buildRangeMeta（连续浅色底 + 段首文字）。
+    // 返回 [{name, id}]：单日 + 多日 88购买 都在「当天」的格子里显示 chip。
+    // 多日范围不再跨格桥接，每一天各自显示，避免重叠。
     const items = [];
     this.data.taobao88.forEach(e => {
       if (!e || !e.startDate || !e.endDate) return;
-      if (e.startDate === e.endDate && e.startDate === ymd) {
+      if (ymd >= e.startDate && ymd <= e.endDate) {
         e.items.forEach(n => items.push({ name: n, id: e.id }));
       }
     });
     return items;
   },
 
-  buildRangeMeta(cells) {
-    // 返回 { ymd: { barPos, label, id } }
-    // barPos: 'start'(段首)/ 'mid'(中间)/ 'end'(段尾)/ 'only'(本段仅一格)
-    // label: 仅段首显示一次文字；跨周后下周第一天再放一次。整格可点击编辑删除。
-    const meta = {};
-    const ensure = ymd => { if (!meta[ymd]) meta[ymd] = { barPos:null, label:null, id:null, span:0 }; return meta[ymd]; };
-    this.data.taobao88.forEach(e => {
-      if (!e || !e.startDate || !e.endDate) return;
-      if (e.startDate === e.endDate) return;
-      if (e.endDate < e.startDate) return;
-      // 在当前月视图 cells 中定位 entry 的范围 cell 索引
-      const indexed = [];
-      cells.forEach((c, i) => {
-        if (c.ymd >= e.startDate && c.ymd <= e.endDate) indexed.push({ ymd: c.ymd, i });
-      });
-      if (indexed.length === 0) return;
-      // 按"行"切段：同一行内的连续 entry 共享一段；行改变时开新段
-      const segs = [];
-      let cur = null;
-      indexed.forEach((it) => {
-        const row = Math.floor(it.i / 7);
-        if (!cur || cur.row !== row) {
-          if (cur) segs.push(cur);
-          cur = { row, items: [] };
-        }
-        cur.items.push(it);
-      });
-      if (cur) segs.push(cur);
-      segs.forEach(seg => {
-        const lastK = seg.items.length - 1;
-        seg.items.forEach((it, k) => {
-          const m = ensure(it.ymd);
-          m.id = e.id;
-          m.span = seg.items.length;       // segment length, drives label width
-          if (k === 0 && k === lastK) m.barPos = 'only';
-          else if (k === 0) m.barPos = 'start';
-          else if (k === lastK) m.barPos = 'end';
-          else m.barPos = 'mid';
-          m.label = (k === 0) ? e.items.join('、') : null;
-        });
-      });
-    });
-    return meta;
-  },
-
   renderMain() {
     const cells = this.monthGrid(this.viewYear, this.viewMonth);
-    const rangeMeta = this.buildRangeMeta(cells);
-    const self = this;
+    // 多日 88 范围：收集所有落在范围内的日期，用于整格淡蓝底提示（不跨格、不重叠）
+    const rangeDays = new Set();
+    this.data.taobao88.forEach(e => {
+      if (!e || !e.startDate || !e.endDate) return;
+      if (e.startDate < e.endDate) {
+        cells.forEach(c => { if (c.ymd >= e.startDate && c.ymd <= e.endDate) rangeDays.add(c.ymd); });
+      }
+    });
     let cellsHtml = '';
     cells.forEach(c => {
       const indHtml = this.renderIndicators(c.ymd);
       const note = this.data.pdd.notes[c.ymd];
       const items = this.cellItems(c.ymd);
       const inRange = this.isInSelectRange(c.ymd);
-      const rm = rangeMeta[c.ymd] || null;
       const cls = ['ck-cell'];
       if (c.outside) cls.push('outside');
       if (c.today) cls.push('today');
       if (c.ymd === this.selectStart || c.ymd === this.selectEnd) cls.push('select-edge');
       if (inRange) cls.push('in-range');
-      if (rm && rm.barPos) cls.push('ck-rng-' + rm.barPos); // start/mid/end/only：加跨界色块
+      if (rangeDays.has(c.ymd)) cls.push('ck-rng'); // 多日范围：整格淡蓝底
       if (this.selectMode) cls.push('selecting');
-      // 多日段首文字：在 cell 底部独立显示（不影响单日 pill）
-      const rngLabel = (rm && rm.label)
-        ? '<div class="ck-rng-label" style="--span:' + (rm.span||1) + ';" title="' + this.esc(rm.label) + '">' + this.esc(rm.label) + '</div>'
-        : '';
-      const rngBar = rm && rm.barPos ? '<div class="ck-rng-bar"></div>' : '';
       const chipHtml = items.slice(0, 2).map(it =>
         '<div class="ck-88-chip" title="' + this.esc(it.name) + '">' + this.esc(it.name) + '</div>'
       ).join('');
@@ -4352,8 +4249,6 @@ const CK = {
         + (note ? '<div class="ck-pdd-note">\ud83d\udce6 ' + this.esc(note) + '</div>' : '')
         + '<div class="ck-88-list">' + chipHtml + overflow + '</div>'
         + '</div>'
-        + rngBar
-        + rngLabel
         + '</div>';
     });
 
@@ -4375,36 +4270,6 @@ const CK = {
       + '<div class="ck-grid ' + (this.selectMode ? 'selecting' : '') + '">' + cellsHtml + '</div>'
       + '</div>';
     return html;
-  },
-
-  computeBarPos(startYmd, endYmd, cells) {
-    const sp = this.cellPos(cells, startYmd);
-    const ep = this.cellPos(cells, endYmd);
-    if (!sp || !ep) return null;
-    if (sp.row === ep.row) {
-      return { row: sp.row, colStart: sp.col, span: ep.col - sp.col + 1 };
-    }
-    return { row: sp.row, colStart: sp.col, span: 7 - sp.col + 1 };
-  },
-
-  barSegments(startYmd, endYmd, cells) {
-    // Split [startYmd, endYmd] into one segment per visible row.
-    // Multi-week entries become multiple bars (broken at week boundary).
-    const segs = [];
-    let cur = null;
-    cells.forEach((c, i) => {
-      if (c.ymd < startYmd || c.ymd > endYmd) return;
-      const row = Math.floor(i / 7) + 1;
-      const col = (i % 7) + 1;
-      if (!cur || cur.row !== row) {
-        if (cur) segs.push(cur);
-        cur = { row, colStart: col, span: 1 };
-      } else {
-        cur.span++;
-      }
-    });
-    if (cur) segs.push(cur);
-    return segs;
   },
 
   formatRange(a, b) {
