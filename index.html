@@ -941,8 +941,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 /* ===== Checkin Page (unified calendar) ===== */
 .ck-page-header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
 .ck-page-title{margin:0;font-size:18px;font-weight:700;color:var(--text-1)}
-/* ck-wrap 占满可视区高度，头/底/操作行定高，剩余空间全给 .ck-grid → 6 行自动等分。 */
-.ck-wrap{padding:8px 12px 80px;max-width:600px;margin:0 auto;display:flex;flex-direction:column;min-height:calc(100vh - 160px);box-sizing:border-box}
+/* ck-wrap 不再 min-height 撑屏，月历按实际行数自然展开：5 行就 5 行高度，6 行就 6 行高度。 */
+.ck-wrap{padding:8px 12px 80px;max-width:600px;margin:0 auto}
 .ck-toolbar{flex:none;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:2px 4px}
 .ck-title{font-size:16px;font-weight:700;color:var(--text-1)}
 .ck-nav{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit;color:var(--text-2)}
@@ -964,14 +964,12 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-weekdays .sun{color:#E87870}
 
 .ck-grid{
-  /* 关键：flex:1 把容器剩余高度全吃掉，grid-auto-rows:1fr 让 6 行等高分完。
-     这样不管容器多高（电脑/手机/横屏），6 行永远是均分的。 */
-  flex:1;min-height:0;
+  /* 每格固定高度 90px，月历按实际行数展开（4/5/6 行都行），不再强制撑屏。 */
   display:grid;grid-template-columns:repeat(7,minmax(0,1fr));
-  grid-auto-rows:1fr;
+  grid-auto-rows:90px;
   grid-auto-flow:dense;
   gap:5px;position:relative;touch-action:pan-y;
-  align-items:stretch;align-content:stretch;
+  align-items:stretch;
 }
 .ck-grid.selecting{touch-action:none}
 .ck-weekdays{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-bottom:4px}
@@ -982,18 +980,17 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   border:1px solid var(--border-light);border-radius:8px;padding:4px 5px;
   background:var(--surface);
   display:flex;flex-direction:column;gap:1px;cursor:pointer;
-  position:relative;z-index:1;min-width:0;min-height:0;
+  position:relative;z-index:1;min-width:0;
   overflow:hidden;  /* 内容不出格，杜绝跨格重叠 */
-  min-height:0;
 }
 /* 单元格用 flex + 每行固定高度：日号 → 蓝色88 → 黄色pdd指示器 → 黄色pdd备注。
    每行高度写死，88 行在所有格子（单日/跨日/有无pdd）都落在同一 y，不随内容浮动。
    pdd-note 高度 16px（比 indicators 14 略大），确保有 pdd 备注时永远看得到。 */
-.ck-cell-inner{display:flex;flex-direction:column;gap:2px;flex:1;min-height:0;overflow:hidden}
+.ck-cell-inner{display:flex;flex-direction:column;gap:1px;flex:1;min-height:0;overflow:hidden}
 .ck-cell-inner .ck-day-num{order:1;flex:none;height:13px;line-height:13px;font-size:12px;font-weight:700}
-.ck-cell-inner .ck-88-list{order:2;flex:1;min-height:24px;overflow:hidden}
+.ck-cell-inner .ck-88-list{order:2;flex:none;height:24px;min-height:24px;overflow:hidden}
 .ck-cell-inner .ck-indicators{order:3;flex:none;height:14px;min-height:14px;overflow:hidden}
-.ck-cell-inner .ck-pdd-note{order:4 !important;flex:none;height:16px;min-height:16px;overflow:hidden;font-size:10px}
+.ck-cell-inner .ck-pdd-note{order:4;flex:none;height:18px;min-height:18px;overflow:hidden;font-size:10px}
 /* 多日 88 事件：每一天都在自己格子里显示 88 chip（与单日一致），不再用跨格桥接条。
    连续范围用整格淡蓝底（.ck-rng）提示，绝不溢出到相邻格子。 */
 .ck-cell .ck-88-list{min-height:0;overflow:hidden}
@@ -1036,30 +1033,7 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   order:3 !important;flex:none;height:16px;min-height:16px;
 }
 
-/* 多日 88 范围：左上角小三角 + 段首右下小箭头（不与 chip 色块视觉重叠） */
-.ck-cell.ck-rng{position:relative}
-.ck-cell.ck-rng::before{
-  content:'';position:absolute;top:0;left:0;
-  width:0;height:0;border-style:solid;
-  border-width:9px 9px 0 0;
-  border-color:#3B82F6 transparent transparent transparent;
-  pointer-events:none;z-index:4;
-}
-.ck-cell.ck-rng.ck-rng-mid::before,.ck-cell.ck-rng.ck-rng-end::before{border-width:6px 6px 0 0}
-/* 段首：右下角小箭头提示"后面还有"。段中段尾：右上角小箭头提示"前/后还有"。 */
-.ck-cell.ck-rng.ck-rng-start::after{
-  content:'';position:absolute;bottom:3px;right:3px;
-  width:0;height:0;border-style:solid;
-  border-width:0 0 6px 6px;border-color:transparent transparent #3B82F6 transparent;
-  pointer-events:none;z-index:4;
-}
-.ck-cell.ck-rng.ck-rng-mid::after,
-.ck-cell.ck-rng.ck-rng-end::after{
-  content:'';position:absolute;top:3px;right:3px;
-  width:0;height:0;border-style:solid;
-  border-width:6px 0 6px 6px;border-color:transparent transparent transparent #3B82F6;
-  pointer-events:none;z-index:4;
-}
+/* 多日 88 范围：不再用蓝角/箭头提示（用户反馈像 bug）。改成：范围内的每一天都和单日一样显示 88 chip，视觉上自然连续。 */
 
 /* Selection mode highlighting */
 .ck-cell.selecting{cursor:pointer}
@@ -1239,13 +1213,14 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
   /* 月历单元格：宽高比 2.0:1（适度高），配合 12px 字号让 6 行月历一屏可看且文字可读 */
   .month-day{aspect-ratio:2.0}
   .month-weekday{padding:4px 0;font-size:12px}
-  /* 签到页月历单元格：电脑端格子更高（aspect-ratio 1.4 ≈ 115→130px），所有文字统一深灰，做满一屏 */
-  .ck-cell{aspect-ratio:1.4;min-height:130px;padding:8px 10px}
+  /* 签到页月历单元格：电脑端格子固定高度 110px（不用 aspect-ratio，避免宽屏时格子变大导致 6 行出屏）。
+     每格大小一致，4/5/6 行的月历都自然适配。 */
+  .ck-cell{height:110px;min-height:110px;max-height:110px;padding:8px 10px}
   .ck-cell-inner{gap:2px}
   .ck-cell-inner .ck-day-num { font-size:15px; height:22px; line-height:22px; }
   .ck-cell-inner .ck-88-list { height:28px; min-height:28px; }
-  .ck-cell-inner .ck-indicators { height:22px; min-height:22px; }
-  .ck-cell-inner .ck-pdd-note { height:24px; min-height:24px; }
+  .ck-cell-inner .ck-indicators { height:20px; min-height:20px; }
+  .ck-cell-inner .ck-pdd-note { height:24px; min-height:24px; font-size:13px; }
   /* 字号加大：电脑端 chip/pdd-note 14px（深灰），撑满各自行 */
   .ck-cell .ck-88-chip { font-size:14px; padding:4px 12px; line-height:1.4; }
   .ck-cell .ck-pdd-note { font-size:14px; padding:2px 11px; line-height:1.4; }
@@ -4246,21 +4221,6 @@ const CK = {
 
   renderMain() {
     const cells = this.monthGrid(this.viewYear, this.viewMonth);
-    // 多日 88 范围：给段首/段中/段尾打不同 class（用于左下角三角 + 段尾箭头指示）。
-    const rangeStart = new Set(); // 段首日期：左上角完整三角
-    const rangeMid = new Set();   // 段中：左上小三角
-    const rangeEnd = new Set();   // 段尾：左上小三角
-    this.data.taobao88.forEach(e => {
-      if (!e || !e.startDate || !e.endDate) return;
-      if (e.startDate < e.endDate) {
-        const inRange = cells.filter(c => c.ymd >= e.startDate && c.ymd <= e.endDate).map(c => c.ymd);
-        if (inRange.length === 0) return;
-        if (inRange.length === 1) { rangeStart.add(inRange[0]); return; }
-        rangeStart.add(inRange[0]);
-        rangeEnd.add(inRange[inRange.length - 1]);
-        for (let i = 1; i < inRange.length - 1; i++) rangeMid.add(inRange[i]);
-      }
-    });
     let cellsHtml = '';
     cells.forEach(c => {
       const indHtml = this.renderIndicators(c.ymd);
@@ -4272,10 +4232,6 @@ const CK = {
       if (c.today) cls.push('today');
       if (c.ymd === this.selectStart || c.ymd === this.selectEnd) cls.push('select-edge');
       if (inRange) cls.push('in-range');
-      // 多日范围标记（绝不与 chip 色块视觉重叠）
-      if (rangeStart.has(c.ymd)) cls.push('ck-rng', 'ck-rng-start');
-      else if (rangeMid.has(c.ymd)) cls.push('ck-rng', 'ck-rng-mid');
-      else if (rangeEnd.has(c.ymd)) cls.push('ck-rng', 'ck-rng-end');
       if (this.selectMode) cls.push('selecting');
       const chipHtml = items.slice(0, 2).map(it =>
         '<div class="ck-88-chip" title="' + this.esc(it.name) + '">' + this.esc(it.name) + '</div>'
@@ -4284,9 +4240,9 @@ const CK = {
       cellsHtml += '<div class="' + cls.join(' ') + '" data-ymd="' + c.ymd + '" onclick="CK.onCellClick(event,\'' + c.ymd + '\')">'
         + '<div class="ck-cell-inner">'
         + '<div class="ck-day-num">' + c.day + '</div>'
+        + '<div class="ck-88-list">' + chipHtml + overflow + '</div>'
         + '<div class="ck-indicators">' + indHtml + '</div>'
         + (note ? '<div class="ck-pdd-note">\ud83d\udce6 ' + this.esc(note) + '</div>' : '')
-        + '<div class="ck-88-list">' + chipHtml + overflow + '</div>'
         + '</div>'
         + '</div>';
     });
