@@ -1036,7 +1036,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 .ck-cell.today{border-color:var(--c-work);box-shadow:0 0 0 2px rgba(107,155,210,.18)}
 .ck-day-num{font-size:11px;font-weight:600;color:var(--text-1);position:relative;z-index:3}
 .ck-cell.today .ck-day-num{background:var(--c-work);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px}
-.ck-indicators{display:flex;gap:3px;flex-wrap:wrap;position:relative;z-index:3;align-items:center}
+/* 注：旧的独立 .ck-indicators 行已废弃——√√ 现在内联到 .ck-day-num 右侧（见 .ck-day-checks），
+   88 和 pdd 之间不再隔着一个独立行。 */
 .ck-ic{font-size:11px;line-height:1}
 .ck-ic-pdd{color:#E87870;font-weight:700;font-size:10px}
 .ck-ic-pdd-a{color:#5BCB5B;font-size:10px}
