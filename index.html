@@ -1412,8 +1412,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
       </div>
       <div class="filter-bar-inline" id="filterBarInline">
         <div class="filter-chip" data-cat="" onclick="UI.toggleFilter(null)"><span class="chip-emoji">●</span><span class="chip-text">全部</span></div>
-        <div class="filter-chip" data-cat="work" onclick="UI.toggleFilter('work')"><span class="chip-emoji">💼</span><span class="chip-text">工作记录</span></div>
-        <div class="filter-chip" data-cat="thoughts" onclick="UI.toggleFilter('thoughts')"><span class="chip-emoji">💭</span><span class="chip-text">今日思考</span></div>
+        <div class="filter-chip" data-cat="work" onclick="UI.toggleFilter('work')"><span class="chip-emoji">💼</span><span class="chip-text">工作</span></div>
+        <div class="filter-chip" data-cat="thoughts" onclick="UI.toggleFilter('thoughts')"><span class="chip-emoji">💭</span><span class="chip-text">AI</span></div>
         <div class="filter-chip" data-cat="housework" onclick="UI.toggleFilter('housework')"><span class="chip-emoji">🧹</span><span class="chip-text">家务</span></div>
         <div class="filter-chip" data-cat="chore" onclick="UI.toggleFilter('chore')"><span class="chip-emoji">📋</span><span class="chip-text">杂事</span></div>
       </div>
@@ -1776,8 +1776,8 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 
 /* ===== Categories ===== */
 const CATEGORIES = [
-  { id:'work', name:'工作记录', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
-  { id:'thoughts', name:'今日思考', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
+  { id:'work', name:'工作', icon:'💼', color:'#6B9BD2', bgClass:'cat-work-bg', textClass:'cat-work-text', dotClass:'cat-work' },
+  { id:'thoughts', name:'AI', icon:'💭', color:'#9B8BEE', bgClass:'cat-thoughts-bg', textClass:'cat-thoughts-text', dotClass:'cat-thoughts' },
   { id:'housework', name:'家务', icon:'🧹', color:'#6CB86C', bgClass:'cat-housework-bg', textClass:'cat-housework-text', dotClass:'cat-housework' },
   { id:'chore', name:'杂事', icon:'📋', color:'#F0A050', bgClass:'cat-chore-bg', textClass:'cat-chore-text', dotClass:'cat-chore' },
 ];
