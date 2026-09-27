@@ -284,9 +284,12 @@ body[data-view="day"] .filter-bar-inline{display:none}
   flex:1;min-width:0;
   font-size:13px;color:var(--text-1);line-height:1.5;
   word-break:break-word;white-space:pre-wrap;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
-  overflow:hidden;text-overflow:ellipsis;
 }
+/* 记录内列表渲染（项目符号 / 编号）——日视图卡片内完整显示，不省略 */
+.pill-row-text .entry-ul,.pill-row-text .entry-ol{margin:4px 0;padding-left:18px}
+.pill-row-text .entry-line{white-space:pre-wrap;word-break:break-word}
+.pill-row-text .entry-blank{height:6px}
+.pill-row-text li{white-space:pre-wrap;word-break:break-word;line-height:1.5}
 
 /* New entry flash + send pop */
 @keyframes flashNew{0%{background:var(--accent-soft);transform:translateY(-4px)}100%{background:transparent;transform:translateY(0)}}
@@ -490,6 +493,16 @@ body[data-view="month"] .add-bar{display:none !important}
 }
 .shower-type-btn.active{border-color:var(--c-shower);background:var(--c-shower);color:#fff}
 .shower-divider{width:1px;height:16px;background:var(--border);margin:0 2px}
+/* 记录格式工具栏（项目符号 / 编号列表） */
+.fmt-bar{display:flex;gap:6px;margin-bottom:7px}
+.fmt-btn{
+  flex:0 0 auto;display:inline-flex;align-items:center;gap:3px;
+  padding:5px 11px;border-radius:11px;font-size:12px;font-weight:600;
+  color:var(--text-2);background:var(--surface);
+  border:1px solid var(--border-light);cursor:pointer;user-select:none;
+}
+.fmt-btn:active{transform:scale(.96);background:var(--pink-1)}
+.fmt-btn .fmt-ico{font-size:13px;line-height:1}
 .shower-toggle{
   display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--text-2);
   padding:4px 9px;border-radius:14px;border:1.5px solid var(--border);
@@ -1464,6 +1477,10 @@ body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after{
 <!-- Bottom Add Bar (outside scrollable area, truly fixed) -->
 <div class="add-bar" id="addBar">
   <div class="add-bar-info" id="addBarInfo"></div>
+  <div class="fmt-bar" id="fmtBar">
+    <button type="button" class="fmt-btn" onclick="UI.insertList('bullet')"><span class="fmt-ico">•</span>项目符号</button>
+    <button type="button" class="fmt-btn" onclick="UI.insertList('num')"><span class="fmt-ico">1.</span>编号</button>
+  </div>
   <div class="input-row">
     <button class="add-type-btn" id="addTypeBtn" type="button" aria-label="展开记录类型选择" title="点击展开类型"><span id="addTypeIcon">💼</span></button>
     <textarea class="input-area" id="entryInput" placeholder="记录此刻..." rows="1" oninput="UI.onInputChange()" onkeydown="UI.onInputKey(event)"></textarea>
@@ -2742,7 +2759,7 @@ const UI = {
       return `
       <div class="pill-row recurring" data-id="${entry.id}" data-date="${date}" style="--cat-color:${cat.color}" onclick="UI.openRecurringOccurrence('${entry.defId}','${date}')">
         <span class="rec-badge">🔁</span>${entry.adjusted ? '<span class="rec-badge adj" title="已调整">✏️</span>' : ''}
-        <div class="pill-row-text">${UI.escapeHtml(disp)}</div>
+        <div class="pill-row-text">${UI.renderContent(disp)}</div>
       </div>`;
     }
     return `
@@ -2753,7 +2770,7 @@ const UI = {
         ontouchend="UI._lpCancel()"
         ontouchmove="UI._lpCancel()"
         oncontextmenu="UI.showEntryActions('${date}','${entry.id}');return false">
-        <div class="pill-row-text" id="content-${entry.id}">${UI.escapeHtml(disp)}</div>
+        <div class="pill-row-text" id="content-${entry.id}">${UI.renderContent(disp)}</div>
       </div>`;
   },
 
@@ -3102,10 +3119,93 @@ const UI = {
   },
 
   onInputKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey && (e.ctrlKey || e.metaKey || window.innerWidth > 768)) {
-      e.preventDefault();
-      UI.addEntry();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // 桌面端（宽屏）或 Ctrl/Meta+Enter：提交
+      if (e.ctrlKey || e.metaKey || window.innerWidth > 768) {
+        e.preventDefault();
+        UI.addEntry();
+        return;
+      }
+      // 移动端：若当前行是列表项，回车自动续行（项目符号/编号）；空列表项回车则退出列表
+      if (UI.continueList()) {
+        e.preventDefault();
+      }
     }
+  },
+
+  /* 在文本框当前行（或选中多行）前插入/取消「项目符号」或「编号」。
+     type: 'bullet' | 'num' */
+  insertList(type) {
+    const ta = document.getElementById('entryInput');
+    if (!ta) return;
+    const val = ta.value;
+    let s = ta.selectionStart, en = ta.selectionEnd;
+    const ls = val.lastIndexOf('\n', s - 1) + 1;
+    let le = val.indexOf('\n', en);
+    if (le === -1) le = val.length;
+    const block = val.slice(ls, le);
+    const lines = block.split('\n');
+    let out;
+    if (type === 'bullet') {
+      out = lines.map(ln => ln.startsWith('- ') ? ln.slice(2) : (ln.trim() === '' ? ln : '- ' + ln)).join('\n');
+    } else {
+      let i = 0;
+      out = lines.map(ln => {
+        i++;
+        if (/^\d+[.)] /.test(ln)) return i + '. ' + ln.replace(/^\d+[.)] /, '');
+        if (ln.trim() === '') return ln;
+        return i + '. ' + ln;
+      }).join('\n');
+    }
+    ta.value = val.slice(0, ls) + out + val.slice(le);
+    ta.focus();
+    ta.selectionStart = ls;
+    ta.selectionEnd = ls + out.length;
+    UI.onInputChange();
+  },
+
+  /* 移动端回车续行：当前行是列表项则续一个同类前缀；空列表项则退出列表。
+     返回 true 表示已处理（调用方应 preventDefault），false 表示交给默认换行。 */
+  continueList() {
+    const ta = document.getElementById('entryInput');
+    if (!ta) return false;
+    const pos = ta.selectionStart;
+    if (pos !== ta.selectionEnd) return false; // 有选区不处理
+    const val = ta.value;
+    const ls = val.lastIndexOf('\n', pos - 1) + 1;
+    let le = val.indexOf('\n', pos);
+    if (le === -1) le = val.length;
+    const line = val.slice(ls, le);
+    const bullet = /^- (.*)$/.exec(line);
+    const num = /^(\d+)[.)] (.*)$/.exec(line);
+    if (bullet) {
+      if (line.trim() === '- ') { // 空项目符号 → 退出列表（去掉前缀，不换行）
+        ta.value = val.slice(0, ls) + val.slice(le);
+        ta.selectionStart = ta.selectionEnd = ls;
+        UI.onInputChange();
+        return true;
+      }
+      const ins = '\n- ';
+      ta.value = val.slice(0, pos) + ins + val.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + ins.length;
+      UI.onInputChange();
+      return true;
+    }
+    if (num) {
+      const n = parseInt(num[1], 10);
+      if (line.trim() === n + '. ' || line.trim() === n + '.') { // 空编号 → 退出列表
+        ta.value = val.slice(0, ls) + val.slice(le);
+        ta.selectionStart = ta.selectionEnd = ls;
+        UI.onInputChange();
+        return true;
+      }
+      const ins = '\n' + (n + 1) + '. ';
+      ta.value = val.slice(0, pos) + ins + val.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + ins.length;
+      UI.onInputChange();
+      return true;
+    }
+    return false;
   },
 
   updateSendBtn() {
@@ -3653,6 +3753,43 @@ const UI = {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  },
+
+  /* 把记录文本渲染为列表/段落：
+     - 以 "- " 或 "* " 开头的行 → 无序列表 <ul><li>
+     - 以 "数字. " 或 "数字) " 开头的行 → 有序列表 <ol><li>
+     - 其余非空行 → <div class="entry-line">（保留空格与换行）
+     - 空行 → <div class="entry-blank">
+     所有文本先 escapeHtml 防注入。仅在日视图卡片使用（详情/日弹窗保留纯文本以兼容编辑）。 */
+  renderContent(raw) {
+    if (!raw) return '';
+    const lines = raw.split('\n');
+    let html = '';
+    let inUl = false, inOl = false;
+    const close = () => {
+      if (inUl) { html += '</ul>'; inUl = false; }
+      if (inOl) { html += '</ol>'; inOl = false; }
+    };
+    for (const line of lines) {
+      const t = line.replace(/\s+$/, '');
+      const b = /^- (.*)$/.exec(t) || /^\* (.*)$/.exec(t);
+      const n = /^(\d+)[.)] (.*)$/.exec(t);
+      if (b) {
+        if (inOl) close();
+        if (!inUl) { html += '<ul class="entry-ul">'; inUl = true; }
+        html += '<li>' + UI.escapeHtml(b[1]) + '</li>';
+      } else if (n) {
+        if (inUl) close();
+        if (!inOl) { html += '<ol class="entry-ol">'; inOl = true; }
+        html += '<li>' + UI.escapeHtml(n[2]) + '</li>';
+      } else {
+        close();
+        if (t.trim() === '') html += '<div class="entry-blank"></div>';
+        else html += '<div class="entry-line">' + UI.escapeHtml(t) + '</div>';
+      }
+    }
+    close();
+    return html;
   },
 
   catLabel(cat) {
