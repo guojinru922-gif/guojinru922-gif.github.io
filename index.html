@@ -284,6 +284,7 @@ body[data-view="day"] .filter-bar-inline{display:none}
   flex:1;min-width:0;
   font-size:13px;color:var(--text-1);line-height:1.5;
   word-break:break-word;white-space:pre-wrap;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
 }
 /* 记录内列表渲染（项目符号 / 编号）——日视图卡片内完整显示，不省略 */
 .pill-row-text .entry-ul,.pill-row-text .entry-ol{margin:4px 0;padding-left:18px}
@@ -525,7 +526,7 @@ body[data-view="month"] .add-bar{display:none !important}
   flex:1;border:2px solid var(--border);border-radius:22px;padding:10px 14px;
   font-size:14px;color:var(--text-1);resize:none;min-height:42px;max-height:100px;
   transition:border-color .2s;background:var(--surface);line-height:1.4;
-  font-family:inherit;
+  font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
 }
 .input-area:focus{outline:none;border-color:var(--accent);background:var(--surface)}
 .input-area::placeholder{color:var(--text-3)}
@@ -617,7 +618,7 @@ body[data-view="month"] .add-bar{display:none !important}
   background:var(--pink-1);transition:background .15s;
 }
 .day-modal-entry:active{background:var(--pink-2)}
-.day-modal-entry-content{flex:1;font-size:13px;color:var(--text-1);word-break:break-word}
+.day-modal-entry-content{flex:1;font-size:13px;color:var(--text-1);word-break:break-word;white-space:pre-wrap;overflow-wrap:break-word;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
 .day-modal-entry-time{font-size:10px;color:var(--text-3);flex-shrink:0}
 .day-modal-entry-actions{display:flex;gap:4px;flex-shrink:0}
 .day-modal-entry-action{
@@ -3119,18 +3120,36 @@ const UI = {
   },
 
   onInputKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      // 桌面端（宽屏）或 Ctrl/Meta+Enter：提交
-      if (e.ctrlKey || e.metaKey || window.innerWidth > 768) {
+    if (e.key === 'Enter') {
+      // Ctrl / Cmd + Enter → 在光标处插入换行（不提交）
+      if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
-        UI.addEntry();
+        UI.insertNewline();
         return;
       }
-      // 移动端：若当前行是列表项，回车自动续行（项目符号/编号）；空列表项回车则退出列表
-      if (UI.continueList()) {
+      // Shift + Enter → 自然换行（交给 textarea 默认行为）
+      if (e.shiftKey) return;
+      // 纯 Enter → 提交保存
+      if (window.innerWidth > 768) {
         e.preventDefault();
+        UI.addEntry();
+      } else {
+        // 移动端：保持原习惯——列表项自动续行，否则默认换行（手机无 Ctrl 键，保存用 + 按钮）
+        if (UI.continueList()) e.preventDefault();
       }
     }
+  },
+
+  /* 在文本框光标处插入一个换行（Ctrl/Cmd+Enter 调用），不触发表单提交 */
+  insertNewline() {
+    const ta = document.getElementById('entryInput');
+    if (!ta) return;
+    const s = ta.selectionStart, en = ta.selectionEnd;
+    const v = ta.value;
+    ta.value = v.slice(0, s) + '\n' + v.slice(en);
+    const pos = s + 1;
+    ta.selectionStart = ta.selectionEnd = pos;
+    UI.onInputChange();
   },
 
   /* 在文本框当前行（或选中多行）前插入/取消「项目符号」或「编号」。
@@ -3440,7 +3459,7 @@ const UI = {
       contentSpan.style.padding = '';
       contentSpan.style.background = '';
       if (save) {
-        const newContent = contentSpan.textContent.trim();
+        const newContent = contentSpan.innerText.replace(/\s+$/,'').replace(/^\s+/,'');
         if (newContent && newContent !== oldContent) {
           Entries.edit(date, entryId, newContent);
           UI.showToast('已保存');
